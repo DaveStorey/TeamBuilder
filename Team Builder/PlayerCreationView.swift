@@ -79,14 +79,24 @@ struct PlayerCreationView: View {
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetch)
         deleteRequest.resultType = .resultTypeStatusOnly
         do {
-            let result = try viewContext.execute(deleteRequest)
+            let _ = try viewContext.execute(deleteRequest)
         } catch (let error) {
-            print("Batch delete error: \(error.localizedDescription)")
+            print("Player delete error: \(error.localizedDescription)")
         }
     }
     
     private func playerDelete(_ name: String, rating: Double) {
         playerList.removeAll(where: { $0.name == name })
+        let fetch: NSFetchRequest<NSFetchRequestResult>
+        fetch = NSFetchRequest(entityName: "PersistedPlayer")
+        fetch.predicate = NSPredicate(format: "name == %@", name)
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetch)
+        deleteRequest.resultType = .resultTypeStatusOnly
+        do {
+            let _ = try viewContext.execute(deleteRequest)
+        } catch (let error) {
+            print("Batch delete error: \(error.localizedDescription)")
+        }
     }
     
     private func playerBuilder() -> some View {
