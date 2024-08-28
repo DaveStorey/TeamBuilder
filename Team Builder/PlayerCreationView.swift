@@ -20,30 +20,32 @@ struct PlayerCreationView: View {
     @FocusState private var isFocused: Bool
     
     var body: some View {
-        ZStack {
+        ZStack() {
             Color.secondary
                 .opacity(0.2)
                 .ignoresSafeArea()
             VStack() {
                 Text("Roster")
                     .font(.headline)
-                List($playerList) { player in
-                    HStack {
-                        Text(player.wrappedValue.name)
-                        Text(player.wrappedValue.gender.displayText)
-                        Text("\(String(format:"%g", player.wrappedValue.rating))")
-                        if selectedPlayers.first(where: { $0.key == player.wrappedValue })?.value == true { Image(systemName: "checkmark") }
-                    }
-                    .swipeActions {
-                        withAnimation {
-                            Button(role: .destructive) { playerDelete(player.wrappedValue.name, rating: player.wrappedValue.rating) } label: {
-                                Label("Delete", systemImage: "trash")
+                VStack() {
+                    List($playerList) { player in
+                        HStack {
+                            Text(player.wrappedValue.name)
+                            Text(player.wrappedValue.gender.displayText)
+                            Text("\(String(format:"%g", player.wrappedValue.rating))")
+                            if selectedPlayers.first(where: { $0.key == player.wrappedValue })?.value == true { Image(systemName: "checkmark") }
+                        }
+                        .swipeActions {
+                            withAnimation {
+                                Button(role: .destructive) { playerDelete(player.wrappedValue.name, rating: player.wrappedValue.rating) } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
                             }
                         }
-                    }
-                    .onTapGesture {
-                        let keyValue = selectedPlayers.first(where: { $0.key == player.wrappedValue})?.value ?? true
-                        selectedPlayers.updateValue(!keyValue, forKey: player.wrappedValue)
+                        .onTapGesture {
+                            let keyValue = selectedPlayers.first(where: { $0.key == player.wrappedValue})?.value ?? true
+                            selectedPlayers.updateValue(!keyValue, forKey: player.wrappedValue)
+                        }
                     }
                 }
                 if !playerList.isEmpty {

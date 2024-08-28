@@ -37,6 +37,7 @@ struct ContentView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink(destination: { PlayerCreationView(playerList: $viewModel.playerList, selectedPlayers: $viewModel.selectedPlayers) },
                                    label: { Text("Add Players") })
+                    .navigationBarTitleDisplayMode(.inline)
                 }
                 ToolbarItem(placement: .bottomBar) {
                     Button(action: { popupRosterOptions = true }, label: {
