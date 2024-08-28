@@ -1,0 +1,14 @@
+{
+  "images" : [
+    {
+      "filename" : "craiyon_165529_vibrant_vector_design_of_multiple_teams_of_people__1024x1024_pixel_app_icon.png",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
