@@ -157,7 +157,7 @@ struct PlayerCreationView: View {
                 }
             }
         } catch(let error) {
-            print("Fetching error: \(error.localizedDescription)")
+            print("Player fetching error: \(error.localizedDescription)")
         }
     }
 }

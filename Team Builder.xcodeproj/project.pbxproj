@@ -9,7 +9,9 @@
 /* Begin PBXBuildFile section */
 		150C90292BD1CD9D003BE366 /* League.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150C90282BD1CD9D003BE366 /* League.swift */; };
 		150C902B2BD1D3CB003BE366 /* TeamOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150C902A2BD1D3CB003BE366 /* TeamOptionsView.swift */; };
+		15AF8CDD2C8F5650000DB659 /* JsonDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AF8CDC2C8F5650000DB659 /* JsonDecoder.swift */; };
 		15D0A5462C7E2E7000563477 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D0A5452C7E2E7000563477 /* Extensions.swift */; };
+		15D0A5492C875E4900563477 /* PersistedRoster.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 15D0A5472C875E4900563477 /* PersistedRoster.xcdatamodeld */; };
 		15E4D7692BB49FF000E51A50 /* Team_BuilderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E4D7682BB49FF000E51A50 /* Team_BuilderApp.swift */; };
 		15E4D76B2BB49FF000E51A50 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E4D76A2BB49FF000E51A50 /* ContentView.swift */; };
 		15E4D76D2BB49FF200E51A50 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 15E4D76C2BB49FF200E51A50 /* Assets.xcassets */; };
@@ -44,7 +46,9 @@
 /* Begin PBXFileReference section */
 		150C90282BD1CD9D003BE366 /* League.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = League.swift; sourceTree = "<group>"; };
 		150C902A2BD1D3CB003BE366 /* TeamOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamOptionsView.swift; sourceTree = "<group>"; };
+		15AF8CDC2C8F5650000DB659 /* JsonDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JsonDecoder.swift; sourceTree = "<group>"; };
 		15D0A5452C7E2E7000563477 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		15D0A5482C875E4900563477 /* PersistedRoster.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = PersistedRoster.xcdatamodel; sourceTree = "<group>"; };
 		15E4D7652BB49FF000E51A50 /* Team Builder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Team Builder.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		15E4D7682BB49FF000E51A50 /* Team_BuilderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Team_BuilderApp.swift; sourceTree = "<group>"; };
 		15E4D76A2BB49FF000E51A50 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -87,6 +91,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		15D0A54A2C87619B00563477 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				15E4D7712BB49FF200E51A50 /* Persistence.swift */,
+				15D0A5472C875E4900563477 /* PersistedRoster.xcdatamodeld */,
+				15E4D7732BB49FF200E51A50 /* PersistedPlayer.xcdatamodeld */,
+				15AF8CDC2C8F5650000DB659 /* JsonDecoder.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
 		15E4D75C2BB49FF000E51A50 = {
 			isa = PBXGroup;
 			children = (
@@ -110,11 +125,10 @@
 		15E4D7672BB49FF000E51A50 /* Team Builder */ = {
 			isa = PBXGroup;
 			children = (
+				15D0A54A2C87619B00563477 /* Persistence */,
 				15E4D7682BB49FF000E51A50 /* Team_BuilderApp.swift */,
 				15E4D76A2BB49FF000E51A50 /* ContentView.swift */,
 				15E4D76C2BB49FF200E51A50 /* Assets.xcassets */,
-				15E4D7712BB49FF200E51A50 /* Persistence.swift */,
-				15E4D7732BB49FF200E51A50 /* PersistedPlayer.xcdatamodeld */,
 				15E4D76E2BB49FF200E51A50 /* Preview Content */,
 				15E4D7972BB4A1FD00E51A50 /* Player.swift */,
 				15E4D7992BB4A2A500E51A50 /* ContentViewViewModel.swift */,
@@ -289,6 +303,8 @@
 				15D0A5462C7E2E7000563477 /* Extensions.swift in Sources */,
 				15E4D7982BB4A1FD00E51A50 /* Player.swift in Sources */,
 				15E4D7692BB49FF000E51A50 /* Team_BuilderApp.swift in Sources */,
+				15AF8CDD2C8F5650000DB659 /* JsonDecoder.swift in Sources */,
+				15D0A5492C875E4900563477 /* PersistedRoster.xcdatamodeld in Sources */,
 				15E4D79A2BB4A2A500E51A50 /* ContentViewViewModel.swift in Sources */,
 				15E4D79E2BB5E71000E51A50 /* PlayerCreationView.swift in Sources */,
 			);
@@ -379,7 +395,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -436,7 +452,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -624,6 +640,16 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
+		15D0A5472C875E4900563477 /* PersistedRoster.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				15D0A5482C875E4900563477 /* PersistedRoster.xcdatamodel */,
+			);
+			currentVersion = 15D0A5482C875E4900563477 /* PersistedRoster.xcdatamodel */;
+			path = PersistedRoster.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
 		15E4D7732BB49FF200E51A50 /* PersistedPlayer.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (

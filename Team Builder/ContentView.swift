@@ -44,7 +44,7 @@ struct ContentView: View {
                         Text("Team Options")
                     })
                 }
-                if !viewModel.selectedPlayers.isEmpty{
+                if !viewModel.selectedPlayers.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Build Teams", action: randomize)
                     }
@@ -71,8 +71,5 @@ struct ContentView: View {
             viewModel.randomize()
         }
     }
+    
 }
-
-//#Preview {
-//    ContentView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
-//}

@@ -20,12 +20,12 @@ enum GenderMatch: String, Codable, Equatable, CaseIterable {
     }
 }
 
-class Player: Identifiable, Equatable, Hashable {
+class Player: Identifiable, Equatable, Hashable, Codable {
     
     var name: String
     var overallRating: Double
     var gender: GenderMatch
-    let createDate = Date()
+    var createDate = Date()
     
     init(name: String, overallRating: Double, match: GenderMatch = .mmp) {
         self.name = name

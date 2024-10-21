@@ -54,18 +54,20 @@ class ContentViewViewModel: ObservableObject {
     }
     
     func generateTeams() {
+        // teamNumbers keeps track of whether gender matches for that team are full
         var teamNumbers: [Int: (Bool, Bool)] = [:]
         for element in 1...numberOfTeams {
             preliminaryTeams.append(Roster(name: "Team \(element)"))
             teamNumbers.updateValue((false, false), forKey: element)
         }
-        let selectedRoster = selectedPlayers.filter({ $0.value })
-        let selectedWMP = selectedRoster.filter({ $0.key.gender == .wmp })
-        let selectedMMP = selectedRoster.filter({ $0.key.gender == .mmp })
+        let selectedRoster = selectedPlayers.filter({ $0.value }).keys
+        let selectedWMP = selectedRoster.filter({ $0.gender == .wmp })
+        let selectedMMP = selectedRoster.filter({ $0.gender == .mmp })
         let maxMMP = Int((Double(selectedMMP.count) / Double(numberOfTeams)).rounded(.awayFromZero))
         let maxWMP = Int((Double(selectedWMP.count) / Double(numberOfTeams)).rounded(.awayFromZero))
+        let maxPlayers = Int((Double(selectedRoster.count) / Double(numberOfTeams)).rounded(.awayFromZero))
         for selectedPlayer in selectedRoster {
-            let player = selectedPlayer.key
+            let player = selectedPlayer
             var team: Int?
             if player.gender == .mmp {
                 team = teamNumbers.filter({ !$0.value.0 }).keys.randomElement()
@@ -76,6 +78,7 @@ class ContentViewViewModel: ObservableObject {
                 let teamIndex = team - 1
                 let limit = player.gender == .mmp ? maxMMP : maxWMP
                 preliminaryTeams[teamIndex].players.append(player)
+                // Checks if team has reached limit on one gender match or the other. If both reached, team is removed from pool of options.
                 if preliminaryTeams[teamIndex].hasReachedGenderLimit(gender: player.gender, limit: limit) {
                     if teamNumbers[team]?.0 == false, teamNumbers[team]?.1 == false {
                         let updatedValue = player.gender == .mmp ? (true, false) : (false, true)
@@ -83,6 +86,10 @@ class ContentViewViewModel: ObservableObject {
                     } else {
                         teamNumbers.removeValue(forKey: team)
                     }
+                }
+                // Checks if team has reached max number of players.
+                if preliminaryTeams[teamIndex].players.count >= maxPlayers {
+                    teamNumbers.removeValue(forKey: team)
                 }
             }
         }
