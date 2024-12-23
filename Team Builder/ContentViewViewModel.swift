@@ -26,31 +26,27 @@ class ContentViewViewModel: ObservableObject {
     
     private func createTeams() {
         generateTeams()
-        var maxRating = 0.0
-        var minRating = 10.0
-        for team in preliminaryTeams {
-            if team.averageRating > maxRating {
-                maxRating = team.averageRating
-            }
-            if team.averageRating < minRating  {
-                minRating = team.averageRating
-            }
+        guard !preliminaryTeams.isEmpty else { return }
+        let (maxRating, minRating) = preliminaryTeams.reduce(into: (0.0, 10.0)) { result, team in
+            result.0 = max(result.0, team.averageRating)
+            result.1 = min(result.1, team.averageRating)
         }
         let teamDifferential = minRating.distance(to: maxRating)
-        if teamDifferential > ratingVariance, ContentViewViewModel.generationCount < 100 {
+        guard teamDifferential > ratingVariance else {
+            teams = preliminaryTeams
+            preliminaryTeams.removeAll()
+            ContentViewViewModel.generationCount = 0
+            return
+        }
+        if ContentViewViewModel.generationCount < 100 {
             if teamDifferential < bestOptionTeams.0 {
                 bestOptionTeams = (teamDifferential, preliminaryTeams)
             }
             ContentViewViewModel.generationCount += 1
             randomize()
-            return
-        } else if ContentViewViewModel.generationCount >= 100 {
+        } else {
             teamDiffError = true
-            return
         }
-        teams = preliminaryTeams
-        preliminaryTeams = []
-        ContentViewViewModel.generationCount = 0
     }
     
     func generateTeams() {
@@ -67,30 +63,37 @@ class ContentViewViewModel: ObservableObject {
         let maxWMP = Int((Double(selectedWMP.count) / Double(numberOfTeams)).rounded(.awayFromZero))
         let maxPlayers = Int((Double(selectedRoster.count) / Double(numberOfTeams)).rounded(.awayFromZero))
         for selectedPlayer in selectedRoster {
-            let player = selectedPlayer
-            var team: Int?
-            if player.gender == .mmp {
-                team = teamNumbers.filter({ !$0.value.0 }).keys.randomElement()
-            } else {
-                team = teamNumbers.filter({ !$0.value.1 }).keys.randomElement()
-            }
-            if let team {
-                let teamIndex = team - 1
-                let limit = player.gender == .mmp ? maxMMP : maxWMP
-                preliminaryTeams[teamIndex].players.append(player)
-                // Checks if team has reached limit on one gender match or the other. If both reached, team is removed from pool of options.
-                if preliminaryTeams[teamIndex].hasReachedGenderLimit(gender: player.gender, limit: limit) {
-                    if teamNumbers[team]?.0 == false, teamNumbers[team]?.1 == false {
-                        let updatedValue = player.gender == .mmp ? (true, false) : (false, true)
-                        teamNumbers.updateValue(updatedValue, forKey: team)
-                    } else {
-                        teamNumbers.removeValue(forKey: team)
-                    }
-                }
-                // Checks if team has reached max number of players.
-                if preliminaryTeams[teamIndex].players.count >= maxPlayers {
+            findTeamForPlayer(player: selectedPlayer,
+                              teamNumbers: &teamNumbers,
+                              maxMMP: maxMMP,
+                              maxWMP: maxWMP,
+                              maxPlayers: maxPlayers)
+        }
+    }
+    
+    private func findTeamForPlayer(player: Player, teamNumbers: inout [Int: (Bool, Bool)], maxMMP: Int, maxWMP: Int, maxPlayers: Int) {
+        var team: Int?
+        if player.gender == .mmp {
+            team = teamNumbers.filter({ !$0.value.0 }).keys.randomElement()
+        } else {
+            team = teamNumbers.filter({ !$0.value.1 }).keys.randomElement()
+        }
+        if let team {
+            let teamIndex = team - 1
+            let limit = player.gender == .mmp ? maxMMP : maxWMP
+            preliminaryTeams[teamIndex].players.append(player)
+            // Checks if team has reached limit on one gender match or the other. If both reached, team is removed from pool of options.
+            if preliminaryTeams[teamIndex].hasReachedGenderLimit(gender: player.gender, limit: limit) {
+                if teamNumbers[team]?.0 == false, teamNumbers[team]?.1 == false {
+                    let updatedValue = player.gender == .mmp ? (true, false) : (false, true)
+                    teamNumbers.updateValue(updatedValue, forKey: team)
+                } else {
                     teamNumbers.removeValue(forKey: team)
                 }
+            }
+            // Checks if team has reached max number of players.
+            if preliminaryTeams[teamIndex].players.count >= maxPlayers {
+                teamNumbers.removeValue(forKey: team)
             }
         }
     }

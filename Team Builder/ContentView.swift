@@ -23,13 +23,24 @@ struct ContentView: View {
                         Color.indigo
                             .opacity(0.5)
                             .ignoresSafeArea()
-                        Text(roster.name)
-                            .font(.headline)
-                            .foregroundStyle(.white)
+                        HStack {
+                            Text(roster.name)
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                            Text("\(String(format:"%g", roster.averageRating))")
+                                .font(.subheadline)
+                                .foregroundStyle(.white)
+                        }
                     }
                     
                     ForEach(roster.players) { player in
-                        Text("\(player.name)")
+                        HStack {
+                            Text("\(player.name)")
+                            Spacer()
+                            Text("\(player.gender.displayText)")
+                                .foregroundStyle(player.gender == .mmp ? .blue : .green)
+                        }
+                        
                     }
                 }
             }
