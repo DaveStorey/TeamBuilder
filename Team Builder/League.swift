@@ -8,24 +8,6 @@
 import Foundation
 import CoreData
 
-class League: Identifiable, Equatable {
-    
-    var name: String
-    var players: [Player]
-    var teams: [Roster]
-    var id = UUID()
-    
-    init(name: String, players: [Player]? = nil, teams: [Roster]? = nil) {
-        self.name = name
-        self.players = players ?? []
-        self.teams = teams ?? []
-    }
-    
-    static func == (lhs: League, rhs: League) -> Bool {
-        lhs.id == rhs.id
-    }
-}
-
 class Roster: Identifiable, Equatable, Codable {
     
     var name: String
@@ -56,6 +38,10 @@ class Roster: Identifiable, Equatable, Codable {
     
     func encoded() -> Data? {
         return try? JSONEncoder().encode(self)
+    }
+    
+    func numberOfPlayers(for gender: GenderMatch) -> Int {
+        return self.players.count(where: { $0.gender == gender })
     }
     
 }

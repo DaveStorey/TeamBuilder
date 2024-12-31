@@ -59,15 +59,33 @@ class ContentViewViewModel: ObservableObject {
         let selectedRoster = selectedPlayers.filter({ $0.value }).keys
         let selectedWMP = selectedRoster.filter({ $0.gender == .wmp })
         let selectedMMP = selectedRoster.filter({ $0.gender == .mmp })
-        let maxMMP = Int((Double(selectedMMP.count) / Double(numberOfTeams)).rounded(.awayFromZero))
-        let maxWMP = Int((Double(selectedWMP.count) / Double(numberOfTeams)).rounded(.awayFromZero))
+        // Accounting for player numbers not evenly divisible by the number of teams, ensuring as even a distribution as possible
+        let teamsWithMaxMMP = Int((Double(selectedMMP.count) / Double(numberOfTeams)).remainder(dividingBy: 4).rounded(.towardZero))
+        let teamsWithMaxWMP = Int((Double(selectedWMP.count) / Double(numberOfTeams)).remainder(dividingBy: 4).rounded(.towardZero))
+        var maxMMP = Int((Double(selectedMMP.count) / Double(numberOfTeams)).rounded(.awayFromZero))
+        var maxWMP = Int((Double(selectedWMP.count) / Double(numberOfTeams)).rounded(.awayFromZero))
         let maxPlayers = Int((Double(selectedRoster.count) / Double(numberOfTeams)).rounded(.awayFromZero))
+        var adjustedMaxMMP = false
+        var adjustedMaxWMP = false
         for selectedPlayer in selectedRoster {
             findTeamForPlayer(player: selectedPlayer,
                               teamNumbers: &teamNumbers,
                               maxMMP: maxMMP,
                               maxWMP: maxWMP,
                               maxPlayers: maxPlayers)
+            let limitCheck = selectedPlayer.gender == .mmp ? teamsWithMaxMMP : teamsWithMaxWMP
+            let alreadyAdjusted = selectedPlayer.gender == .mmp ? adjustedMaxMMP : adjustedMaxWMP
+            // When the number of players isn't evenly divisible by the number of teams, once the remainder has been taken care of,
+            // the max needs to be adjusted down to ensure that one team doesn't end up with 2+ fewer of one gender match.
+            if !alreadyAdjusted, preliminaryTeams.count(where: {
+                $0.hasReachedGenderLimit(gender: selectedPlayer.gender, limit: maxMMP)}) == limitCheck {
+                switch selectedPlayer.gender {
+                case .mmp: maxMMP = maxMMP - 1
+                    adjustedMaxMMP = true
+                case .wmp: maxWMP = maxWMP - 1
+                    adjustedMaxWMP = true
+                }
+            }
         }
     }
     
