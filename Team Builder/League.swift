@@ -8,11 +8,12 @@
 import Foundation
 import CoreData
 
-class Roster: Identifiable, Equatable, Codable {
+class Roster: Identifiable, Equatable, Codable, Hashable {
     
     var name: String
     var players: [Player]
     var createDate: Date
+    var id: UUID = UUID()
     
     init(name: String, players: [Player]? = nil) {
         self.name = name
@@ -22,6 +23,10 @@ class Roster: Identifiable, Equatable, Codable {
     
     static func == (lhs: Roster, rhs: Roster) -> Bool {
         lhs.name == rhs.name
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
     }
     
     var averageRating: Double {

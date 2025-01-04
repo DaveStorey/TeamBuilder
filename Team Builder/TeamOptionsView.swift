@@ -25,6 +25,7 @@ struct TeamOptionsView: View {
                     TextField("How many teams?", value: $viewModel.numberOfTeams, format: .number)
                         .padding(.horizontal)
                         .textFieldStyle(.roundedBorder)
+                        .keyboardType(.numberPad)
                 }
                 VStack(alignment: .leading, spacing: 3) {
                     Text("What is the maximum rating variance between teams?")
@@ -32,6 +33,7 @@ struct TeamOptionsView: View {
                     TextField("What is the maximum rating variance between teams?", value: $viewModel.ratingVariance, format: .number)
                         .padding(.horizontal)
                         .textFieldStyle(.roundedBorder)
+                        .keyboardType(.decimalPad)
                 }
                 Button(action: {
                     self.dismiss.callAsFunction()

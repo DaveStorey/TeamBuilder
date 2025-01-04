@@ -11,12 +11,14 @@ import CoreData
 
 struct PlayerCreationView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.managedObjectContext) var viewContext
     @Binding var playerList: [Player]
     @Binding var selectedPlayers: [Player: Bool]
     @State var playerName: String = ""
     @State var playerRating: Double = 0.0
     @State var playerMatch: GenderMatch = .mmp
+    @State var displayPlayerInfo = false
+    @State private var playerInfo: Player?
     @FocusState private var isFocused: Bool
     
     var body: some View {
@@ -35,17 +37,20 @@ struct PlayerCreationView: View {
                             Text("\(String(format:"%g", player.wrappedValue.rating))")
                             if selectedPlayers.first(where: { $0.key == player.wrappedValue })?.value == true { Image(systemName: "checkmark") }
                         }
-                        .swipeActions {
+                        .swipeActions(edge: .trailing) {
                             withAnimation {
-                                Button(role: .destructive) { playerDelete(player.wrappedValue.name, rating: player.wrappedValue.rating) } label: {
+                                Button(role: .destructive) { playerDelete(Player(name: player.wrappedValue.name, overallRating: player.wrappedValue.rating)) } label: {
                                     Label("Delete", systemImage: "trash")
                                 }
                             }
                         }
                         .onTapGesture {
-                            let keyValue = selectedPlayers.first(where: { $0.key == player.wrappedValue})?.value ?? true
-                            selectedPlayers.updateValue(!keyValue, forKey: player.wrappedValue)
+                            withAnimation {
+                                let keyValue = selectedPlayers.first(where: { $0.key == player.wrappedValue})?.value ?? true
+                                selectedPlayers.updateValue(!keyValue, forKey: player.wrappedValue)
+                            }
                         }
+                        .onLongPressGesture(perform: { playerInfo = player.wrappedValue })
                     }
                 }
                 if !playerList.isEmpty {
@@ -63,15 +68,23 @@ struct PlayerCreationView: View {
                 
                 Button(action: {
                     withAnimation {
-                        savePlayer(playerName: playerName, playerRating: playerRating)
+                        savePlayer(Player(name: playerName, overallRating: playerRating, match: playerMatch) )
                     }
                 }, label: { Text("Save").foregroundStyle(.white) })
                 .padding()
                 .background(.blue)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
+                .onSubmit {
+                    isFocused = false
+                }
             }
         }
         .onAppear { getPlayers() }
+        .popover(item: $playerInfo) { selectedPlayer in
+            PlayerInfoView(player: selectedPlayer)
+                .presentationDetents([.height(250)])
+                .onDisappear { playerInfo = nil }
+        }
     }
     
     private func rosterDelete() {
@@ -87,18 +100,9 @@ struct PlayerCreationView: View {
         }
     }
     
-    private func playerDelete(_ name: String, rating: Double) {
-        playerList.removeAll(where: { $0.name == name })
-        let fetch: NSFetchRequest<NSFetchRequestResult>
-        fetch = NSFetchRequest(entityName: "PersistedPlayer")
-        fetch.predicate = NSPredicate(format: "name == %@", name)
-        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetch)
-        deleteRequest.resultType = .resultTypeStatusOnly
-        do {
-            let _ = try viewContext.execute(deleteRequest)
-        } catch (let error) {
-            print("Batch delete error: \(error.localizedDescription)")
-        }
+    private func playerDelete(_ player: Player) {
+        playerList.removeAll(where: { $0.name == player.name })
+        player.deletePlayers(context: viewContext)
     }
     
     private func playerBuilder() -> some View {
@@ -107,6 +111,7 @@ struct PlayerCreationView: View {
                 .padding()
                 .textFieldStyle(.roundedBorder)
                 .focused($isFocused)
+                .autocorrectionDisabled(true)
             
             Picker(selection: $playerMatch, label: Text("Gender Match")) {
                 Text("MMP").tag(GenderMatch.mmp)
@@ -117,22 +122,12 @@ struct PlayerCreationView: View {
             TextField("Player Rating", value: $playerRating, format: .number)
                 .padding()
                 .textFieldStyle(.roundedBorder)
+                .keyboardType(.decimalPad)
         }
     }
     
-    private func savePlayer(playerName: String, playerRating: Double) {
-        let player = Player(name: playerName, overallRating: playerRating, match: self.playerMatch)
-        let testPlayer = PersistedPlayer(context: viewContext)
-        testPlayer.name = player.name
-        testPlayer.createDate = Date()
-        testPlayer.gender = player.gender.rawValue
-        testPlayer.overallRating = player.overallRating
-        do {
-            viewContext.insert(testPlayer)
-            try viewContext.save()
-        } catch(let error) {
-            print("Persistence context error: \(error.localizedDescription)")
-        }
+    private func savePlayer(_ player: Player) {
+        player.savePlayer(context: viewContext)
         if !playerList.contains(where: { $0.name == player.name && $0.rating == player.rating }) {
             playerList.append(player)
         }
@@ -153,7 +148,12 @@ struct PlayerCreationView: View {
             for player in players where !player.name.isNilOrEmpty {
                 let match = GenderMatch(rawValue: player.gender ?? "MMP") ?? .mmp
                 if !playerList.contains(where: { $0.name == player.name && $0.overallRating == player.overallRating}) {
-                    playerList.append(Player(name: player.name ?? "", overallRating: player.overallRating, match: match))
+                    playerList.append(Player(name: player.name ?? "",
+                                             overallRating: player.overallRating,
+                                             match: match,
+                                             wins: Int(player.wins),
+                                             losses: Int(player.losses)
+                                            ))
                 }
             }
         } catch(let error) {

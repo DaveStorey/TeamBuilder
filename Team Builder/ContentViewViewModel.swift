@@ -131,8 +131,20 @@ class ContentViewViewModel: ObservableObject {
         createTeams()
     }
     
-    func savePlayer() {
-        let player = Player(name: playerName, overallRating: playerRating)
-        playerList.append(player)
+    func teamWin(_ team: String, context: NSManagedObjectContext) {
+        let roster = teams.first { $0.name == team }!
+        for player in roster.players {
+            player.wins += 1
+            player.updatePlayer(context: context)
+        }
     }
+    
+    func teamLoss(_ team: String, context: NSManagedObjectContext) {
+        let roster = teams.first { $0.name == team }!
+        for player in roster.players {
+            player.losses += 1
+            player.updatePlayer(context: context)
+        }
+    }
+    
 }

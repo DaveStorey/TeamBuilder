@@ -24,9 +24,13 @@ struct ContentView: View {
                             .opacity(0.5)
                             .ignoresSafeArea()
                         HStack {
-                            Text(roster.name)
-                                .font(.headline)
-                                .foregroundStyle(.white)
+                            NavigationLink(destination : {
+                                TeamResultView(viewModel: viewModel, team: roster.name)},
+                                           label: {
+                                Text(roster.name)
+                                    .font(.headline)
+                                    .foregroundStyle(.white)
+                            })
                             Text("(\(roster.numberOfPlayers(for: .mmp)) : \(roster.numberOfPlayers(for: .wmp)))")
                                 .font(.subheadline)
                                 .foregroundStyle(.white)
