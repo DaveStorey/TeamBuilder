@@ -14,28 +14,51 @@ struct PlayerInfoView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color.secondary
-                    .opacity(0.2)
+                Color.secondary.opacity(0.2)
                     .ignoresSafeArea()
-                VStack(alignment: .center, spacing: 15) {
-                    Text("\(player.name)")
+
+                VStack(spacing: 15) {
+                    // Player Info Header
+                    Text(player.name)
                         .font(.largeTitle)
                         .padding()
-                    Text("\(player.wins) wins")
-                        .font(.headline)
-                    Text("\(player.losses) losses")
-                        .font(.headline)
-                    Text("\(String(format:"%g", player.winningPercentage))")
-                        .font(.headline)
+
+                    // Player Stats Section
+                    PlayerStatView(label: "Wins", value: "\(player.wins)")
+                    PlayerStatView(label: "Losses", value: "\(player.losses)")
+                    PlayerStatView(label: "Winning Percentage", value: String(format: "%g", player.winningPercentage))
+                    
                     Spacer()
                         .frame(height: 50)
-                    NavigationLink(destination: { PlayerEditView(player: $player)},
-                                   label: { Text("Edit").foregroundStyle(.white)})
-                    .padding()
-                    .background(.blue)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    
+                    // Edit Button
+                    NavigationLink(destination: PlayerEditView(player: $player)) {
+                        Text("Edit")
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
                 }
+                .padding()
             }
         }
+    }
+}
+
+// Reusable Player Stat View
+struct PlayerStatView: View {
+    var label: String
+    var value: String
+    
+    var body: some View {
+        VStack() {
+            Text(label)
+                .font(.headline)
+            Text(value)
+                .font(.body)
+        }
+        .padding(.horizontal)
     }
 }
