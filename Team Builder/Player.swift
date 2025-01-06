@@ -91,7 +91,6 @@ class Player: Identifiable, Equatable, Hashable, Codable {
         updateRequest.resultType = .updatedObjectIDsResultType
         do {
             let result = try context.execute(updateRequest)
-            print("\(result.description)")
         } catch(let error) {
             print("Persistence update error: \(error.localizedDescription)")
         }

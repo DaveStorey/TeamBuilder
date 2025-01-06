@@ -18,7 +18,7 @@ struct PlayerCreationView: View {
     @State var playerRating: Double = 0.0
     @State var playerMatch: GenderMatch = .mmp
     @State var displayPlayerInfo = false
-    @State private var playerInfo: Player?
+    @State private var playerInfo: Player = Player(name: "", overallRating: 0.0, match: .mmp, wins: 0, losses: 0)
     @FocusState private var isFocused: Bool
     
     var body: some View {
@@ -50,7 +50,9 @@ struct PlayerCreationView: View {
                                 selectedPlayers.updateValue(!keyValue, forKey: player.wrappedValue)
                             }
                         }
-                        .onLongPressGesture(perform: { playerInfo = player.wrappedValue })
+                        .onLongPressGesture(perform: {
+                            displayPlayerInfo = true
+                            playerInfo = player.wrappedValue })
                     }
                 }
                 if !playerList.isEmpty {
@@ -80,11 +82,9 @@ struct PlayerCreationView: View {
             }
         }
         .onAppear { getPlayers() }
-        .popover(item: $playerInfo) { selectedPlayer in
-            PlayerInfoView(player: selectedPlayer)
-                .presentationDetents([.height(250)])
-                .onDisappear { playerInfo = nil }
-        }
+        .popover(isPresented: $displayPlayerInfo, content: {
+            PlayerInfoView(player: $playerInfo)
+        })
     }
     
     private func rosterDelete() {

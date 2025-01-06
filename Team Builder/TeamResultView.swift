@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct TeamResultView: View {
+    
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) var viewContext
     var viewModel: ContentViewViewModel
@@ -21,10 +22,10 @@ struct TeamResultView: View {
                 .ignoresSafeArea()
             VStack {
                 Text("Team Result")
-                    .font(.headline)
+                    .font(.largeTitle)
                     .padding()
                 Text(team)
-                    .font(.subheadline)
+                    .font(.title)
                 Picker(selection: $winLoss, label: Text("Win/Loss")) {
                     Text("Win").tag("Win")
                     Text("Loss").tag("Loss")

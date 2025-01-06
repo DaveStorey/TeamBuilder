@@ -37,7 +37,7 @@ struct TeamOptionsView: View {
                 }
                 Button(action: {
                     self.dismiss.callAsFunction()
-                }, label: { Text(verbatim: "Save").foregroundStyle(.white) })
+                }, label: { Text("Save").foregroundStyle(.white) })
                 .padding()
                 .background(.blue)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
