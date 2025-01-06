@@ -50,71 +50,90 @@ class ContentViewViewModel: ObservableObject {
     }
     
     func generateTeams() {
-        // teamNumbers keeps track of whether gender matches for that team are full
-        var teamNumbers: [Int: (Bool, Bool)] = [:]
-        for element in 1...numberOfTeams {
-            preliminaryTeams.append(Roster(name: "Team \(element)"))
-            teamNumbers.updateValue((false, false), forKey: element)
+        // Initialize teams and gender limits
+        var teamNumbers: [Int: (Int, Int)] = [:] // Track team assignments (mmpCount, wmpCount)
+        preliminaryTeams = (1...numberOfTeams).map { Roster(name: "Team \($0)") }
+        (1...numberOfTeams).forEach { teamNumbers[$0] = (0, 0) }
+        
+        let selectedRoster = selectedPlayers.filter { $0.value }.keys
+        let selectedMMP = selectedRoster.filter { $0.gender == .mmp }
+        let selectedWMP = selectedRoster.filter { $0.gender == .wmp }
+        
+        // Calculate the maximum number of players per team, ensuring no more than 1 difference
+        let maxPlayersPerTeam = calculateMaxPlayers(forMMP: selectedRoster.count)
+        let maxMMPPerTeam = calculateMaxPlayers(forMMP: selectedMMP.count)
+        let maxWMPPerTeam = calculateMaxPlayers(forMMP: selectedWMP.count)
+
+        // Phase 1: Distribute MMP and WMP players evenly across teams, ensuring no team is missing a gender
+        var mmpPlayerQueue = selectedMMP.shuffled()
+        var wmpPlayerQueue = selectedWMP.shuffled()
+        
+        // First, distribute players to ensure each team gets at least 1 player of each gender if possible
+        distributePlayersToTeams(mmpQueue: &mmpPlayerQueue, wmpQueue: &wmpPlayerQueue, teamNumbers: &teamNumbers, maxMMPPerTeam: maxMMPPerTeam, maxWMPPerTeam: maxWMPPerTeam, maxPlayersPerTeam: maxPlayersPerTeam)
+        
+        // Phase 2: Distribute any leftover players (if there are any left in the queues)
+        distributeLeftoverPlayers(mmpQueue: &mmpPlayerQueue, wmpQueue: &wmpPlayerQueue, teamNumbers: &teamNumbers, maxPlayersPerTeam: maxPlayersPerTeam)
+    }
+
+    // Helper function to calculate max number of players per team
+    private func calculateMaxPlayers(forMMP totalPlayerCount: Int) -> Int {
+        return Int((Double(totalPlayerCount) / Double(numberOfTeams)).rounded(.awayFromZero))
+    }
+
+    // Phase 1: Distribute players evenly and respect gender balance constraints
+    private func distributePlayersToTeams(mmpQueue: inout [Player], wmpQueue: inout [Player], teamNumbers: inout [Int: (Int, Int)], maxMMPPerTeam: Int, maxWMPPerTeam: Int, maxPlayersPerTeam: Int) {
+        // Distribute MMP players first
+        while !mmpQueue.isEmpty {
+            for teamIndex in teamNumbers.keys.sorted() {
+                if let (mmpCount, wmpCount) = teamNumbers[teamIndex], mmpCount < maxMMPPerTeam && (mmpCount + wmpCount) < maxPlayersPerTeam {
+                    let player = mmpQueue.removeFirst()
+                    preliminaryTeams[teamIndex - 1].players.append(player)
+                    teamNumbers[teamIndex] = (mmpCount + 1, wmpCount)
+                    if mmpQueue.isEmpty { break }
+                }
+            }
         }
-        let selectedRoster = selectedPlayers.filter({ $0.value }).keys
-        let selectedWMP = selectedRoster.filter({ $0.gender == .wmp })
-        let selectedMMP = selectedRoster.filter({ $0.gender == .mmp })
-        // Accounting for player numbers not evenly divisible by the number of teams, ensuring as even a distribution as possible
-        let teamsWithMaxMMP = Int((Double(selectedMMP.count) / Double(numberOfTeams)).remainder(dividingBy: 4).rounded(.towardZero))
-        let teamsWithMaxWMP = Int((Double(selectedWMP.count) / Double(numberOfTeams)).remainder(dividingBy: 4).rounded(.towardZero))
-        var maxMMP = Int((Double(selectedMMP.count) / Double(numberOfTeams)).rounded(.awayFromZero))
-        var maxWMP = Int((Double(selectedWMP.count) / Double(numberOfTeams)).rounded(.awayFromZero))
-        let maxPlayers = Int((Double(selectedRoster.count) / Double(numberOfTeams)).rounded(.awayFromZero))
-        var adjustedMaxMMP = false
-        var adjustedMaxWMP = false
-        for selectedPlayer in selectedRoster {
-            findTeamForPlayer(player: selectedPlayer,
-                              teamNumbers: &teamNumbers,
-                              maxMMP: maxMMP,
-                              maxWMP: maxWMP,
-                              maxPlayers: maxPlayers)
-            let limitCheck = selectedPlayer.gender == .mmp ? teamsWithMaxMMP : teamsWithMaxWMP
-            let alreadyAdjusted = selectedPlayer.gender == .mmp ? adjustedMaxMMP : adjustedMaxWMP
-            // When the number of players isn't evenly divisible by the number of teams, once the remainder has been taken care of,
-            // the max needs to be adjusted down to ensure that one team doesn't end up with 2+ fewer of one gender match.
-            if !alreadyAdjusted, preliminaryTeams.count(where: {
-                $0.hasReachedGenderLimit(gender: selectedPlayer.gender, limit: maxMMP)}) == limitCheck {
-                switch selectedPlayer.gender {
-                case .mmp: maxMMP = maxMMP - 1
-                    adjustedMaxMMP = true
-                case .wmp: maxWMP = maxWMP - 1
-                    adjustedMaxWMP = true
+
+        // Distribute WMP players next
+        while !wmpQueue.isEmpty {
+            for teamIndex in teamNumbers.keys.sorted() {
+                if let (mmpCount, wmpCount) = teamNumbers[teamIndex], wmpCount < maxWMPPerTeam && (mmpCount + wmpCount) < maxPlayersPerTeam {
+                    let player = wmpQueue.removeFirst()
+                    preliminaryTeams[teamIndex - 1].players.append(player)
+                    teamNumbers[teamIndex] = (mmpCount, wmpCount + 1)
+                    if wmpQueue.isEmpty { break }
                 }
             }
         }
     }
-    
-    private func findTeamForPlayer(player: Player, teamNumbers: inout [Int: (Bool, Bool)], maxMMP: Int, maxWMP: Int, maxPlayers: Int) {
-        var team: Int?
-        if player.gender == .mmp {
-            team = teamNumbers.filter({ !$0.value.0 }).keys.randomElement()
-        } else {
-            team = teamNumbers.filter({ !$0.value.1 }).keys.randomElement()
-        }
-        if let team {
-            let teamIndex = team - 1
-            let limit = player.gender == .mmp ? maxMMP : maxWMP
-            preliminaryTeams[teamIndex].players.append(player)
-            // Checks if team has reached limit on one gender match or the other. If both reached, team is removed from pool of options.
-            if preliminaryTeams[teamIndex].hasReachedGenderLimit(gender: player.gender, limit: limit) {
-                if teamNumbers[team]?.0 == false, teamNumbers[team]?.1 == false {
-                    let updatedValue = player.gender == .mmp ? (true, false) : (false, true)
-                    teamNumbers.updateValue(updatedValue, forKey: team)
-                } else {
-                    teamNumbers.removeValue(forKey: team)
+
+    // Phase 2: Distribute any leftover players across teams
+    private func distributeLeftoverPlayers(mmpQueue: inout [Player], wmpQueue: inout [Player], teamNumbers: inout [Int: (Int, Int)], maxPlayersPerTeam: Int) {
+        // Distribute any remaining MMP players across teams
+        while !mmpQueue.isEmpty {
+            for teamIndex in teamNumbers.keys.sorted() {
+                if let (mmpCount, wmpCount) = teamNumbers[teamIndex], (mmpCount + wmpCount) < maxPlayersPerTeam {
+                    let player = mmpQueue.removeFirst()
+                    preliminaryTeams[teamIndex - 1].players.append(player)
+                    teamNumbers[teamIndex] = (mmpCount + 1, wmpCount)
+                    if mmpQueue.isEmpty { break }
                 }
             }
-            // Checks if team has reached max number of players.
-            if preliminaryTeams[teamIndex].players.count >= maxPlayers {
-                teamNumbers.removeValue(forKey: team)
+        }
+
+        // Distribute any remaining WMP players across teams
+        while !wmpQueue.isEmpty {
+            for teamIndex in teamNumbers.keys.sorted() {
+                if let (mmpCount, wmpCount) = teamNumbers[teamIndex], (mmpCount + wmpCount) < maxPlayersPerTeam {
+                    let player = wmpQueue.removeFirst()
+                    preliminaryTeams[teamIndex - 1].players.append(player)
+                    teamNumbers[teamIndex] = (mmpCount, wmpCount + 1)
+                    if wmpQueue.isEmpty { break }
+                }
             }
         }
     }
+
     
     func choseBestOption() {
         teamDiffError = false
