@@ -90,7 +90,7 @@ class Player: Identifiable, Equatable, Hashable, Codable {
         updateRequest.propertiesToUpdate = ["wins": Int16(wins), "losses": Int16(losses)]
         updateRequest.resultType = .updatedObjectIDsResultType
         do {
-            let result = try context.execute(updateRequest)
+            let _ = try context.execute(updateRequest)
         } catch(let error) {
             print("Persistence update error: \(error.localizedDescription)")
         }
