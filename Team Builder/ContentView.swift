@@ -12,55 +12,26 @@ import Combine
 struct ContentView: View {
     @StateObject var viewModel = ContentViewViewModel()
     @Environment(\.managedObjectContext) private var viewContext
-    @State var popupRosterOptions = false
-    @State var playerList: [Player] = []
+    @State private var popupRosterOptions = false
 
     var body: some View {
         NavigationView {
             List {
                 ForEach(viewModel.teams) { roster in
-                    ZStack {
-                        Color.indigo
-                            .opacity(0.5)
-                            .ignoresSafeArea()
-                        HStack {
-                            NavigationLink(destination : {
-                                TeamResultView(viewModel: viewModel, team: roster.name)},
-                                           label: {
-                                Text(roster.name)
-                                    .font(.headline)
-                                    .foregroundStyle(.white)
-                            })
-                            Text("(\(roster.numberOfPlayers(for: .mmp)) : \(roster.numberOfPlayers(for: .wmp)))")
-                                .font(.subheadline)
-                                .foregroundStyle(.white)
-                            Text("\(String(format:"%g", roster.averageRating))")
-                                .font(.subheadline)
-                                .foregroundStyle(.white)
-                        }
-                    }
-                    
-                    ForEach(roster.players) { player in
-                        HStack {
-                            Text("\(player.name)")
-                            Spacer()
-                            Text("\(player.gender.displayText)")
-                                .foregroundStyle(player.gender == .mmp ? .blue : .green)
-                        }
-                        
-                    }
+                    TeamSectionView(roster: roster, viewModel: viewModel)
+                    PlayerListView(players: roster.players)
                 }
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    NavigationLink(destination: { PlayerCreationView(playerList: $viewModel.playerList, selectedPlayers: $viewModel.selectedPlayers) },
-                                   label: { Text("Add Players") })
+                    NavigationLink(
+                        destination: PlayerCreationView(playerList: $viewModel.playerList, selectedPlayers: $viewModel.selectedPlayers),
+                        label: { Text("Add Players") }
+                    )
                     .navigationBarTitleDisplayMode(.inline)
                 }
                 ToolbarItem(placement: .bottomBar) {
-                    Button(action: { popupRosterOptions = true }, label: {
-                        Text("Team Options")
-                    })
+                    Button("Team Options") { popupRosterOptions = true }
                 }
                 if !viewModel.selectedPlayers.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -69,15 +40,17 @@ struct ContentView: View {
                 }
             }
         }
-        .alert("Team Differential Error", isPresented: $viewModel.teamDiffError, actions: {
-            Button("Use best option", action: { viewModel.choseBestOption() })
-            Button("Change team differential", action: {
-                viewModel.teamDiffError = false
-                popupRosterOptions = true
-            })
-        }, message: {
-            Text("No teams found with the specified parameters. The best option found has a difference of \(String(format:"%g", viewModel.bestOptionTeams.0))")
-        })
+        .alert(isPresented: $viewModel.teamDiffError) {
+            Alert(
+                title: Text("Team Differential Error"),
+                message: Text("No teams found with the specified parameters. The best option found has a difference of \(String(format:"%g", viewModel.bestOptionTeams.0))"),
+                primaryButton: .default(Text("Use best option")) { viewModel.choseBestOption() },
+                secondaryButton: .cancel {
+                    viewModel.teamDiffError = false
+                    popupRosterOptions = true
+                }
+            )
+        }
         .popover(isPresented: $popupRosterOptions) {
             TeamOptionsView(viewModel: viewModel)
                 .presentationDetents([.height(250)])
@@ -85,9 +58,57 @@ struct ContentView: View {
     }
     
     private func randomize() {
-        withAnimation {
-            viewModel.randomize()
+        withAnimation { viewModel.randomize() }
+    }
+}
+
+struct TeamSectionView: View {
+    let roster: Roster
+    @ObservedObject var viewModel: ContentViewViewModel
+
+    var body: some View {
+        ZStack {
+            Color.indigo
+                .opacity(0.5)
+                .ignoresSafeArea()
+            HStack {
+                NavigationLink(
+                    destination: TeamResultView(viewModel: viewModel, team: roster.name),
+                    label: { Text(roster.name).font(.headline).foregroundStyle(.white) }
+                )
+                TeamInfoView(roster: roster)
+            }
         }
     }
-    
+}
+
+struct TeamInfoView: View {
+    let roster: Roster
+
+    var body: some View {
+        HStack {
+            Text("(\(roster.numberOfPlayers(for: .mmp)) : \(roster.numberOfPlayers(for: .wmp)))")
+                .font(.subheadline)
+                .foregroundStyle(.white)
+            Text("\(String(format: "%.2f", roster.averageRating))")
+                .font(.subheadline)
+                .foregroundStyle(.white)
+                .padding([.trailing])
+        }
+    }
+}
+
+struct PlayerListView: View {
+    let players: [Player]
+
+    var body: some View {
+        ForEach(players) { player in
+            HStack {
+                Text(player.name)
+                Spacer()
+                Text(player.gender.displayText)
+                    .foregroundStyle(player.gender == .mmp ? .blue : .green)
+            }
+        }
+    }
 }
