@@ -6,11 +6,9 @@
 //
 
 import SwiftUI
-import CoreData
-import Combine
 
 struct ContentView: View {
-    @StateObject var viewModel = ContentViewViewModel()
+    @ObservedObject var viewModel = ContentViewViewModel()
     @Environment(\.managedObjectContext) private var viewContext
     @State private var popupRosterOptions = false
 
@@ -35,7 +33,11 @@ struct ContentView: View {
                 }
                 if !viewModel.selectedPlayers.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Build Teams", action: randomize)
+                        Button("Build Teams", action: {
+                            withAnimation {
+                                viewModel.randomize()
+                            }
+                        })
                     }
                 }
             }
@@ -44,9 +46,9 @@ struct ContentView: View {
             Alert(
                 title: Text("Team Differential Error"),
                 message: Text("No teams found with the specified parameters. The best option found has a difference of \(String(format:"%g", viewModel.bestOptionTeams.0))"),
-                primaryButton: .default(Text("Use best option")) { viewModel.choseBestOption() },
+                primaryButton: .default(Text("Use best option")) { viewModel.choseBestOption(true) },
                 secondaryButton: .cancel {
-                    viewModel.teamDiffError = false
+                    viewModel.choseBestOption(false)
                     popupRosterOptions = true
                 }
             )
@@ -55,10 +57,6 @@ struct ContentView: View {
             TeamOptionsView(viewModel: viewModel)
                 .presentationDetents([.height(250)])
         }
-    }
-    
-    private func randomize() {
-        withAnimation { viewModel.randomize() }
     }
 }
 
@@ -105,6 +103,7 @@ struct PlayerListView: View {
         ForEach(players) { player in
             HStack {
                 Text(player.name)
+                    .lineLimit(1, reservesSpace: true)
                 Spacer()
                 Text(player.gender.displayText)
                     .foregroundStyle(player.gender == .mmp ? .blue : .green)

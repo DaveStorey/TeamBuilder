@@ -39,6 +39,9 @@ struct PlayerCreationView: View {
             ToolbarItem(placement: .destructiveAction, content: {
                 Button("Clear Roster", action: { rosterClearAlert = true })
             })
+            ToolbarItem(placement: .primaryAction, content: {
+                Button("Select All", action: { selectAllPlayers() })
+             })
         }
         .onAppear { getPlayers() }
         .popover(isPresented: $displayPlayerInfo, content: {
@@ -69,7 +72,15 @@ private extension PlayerCreationView {
     
     // MARK: - Player List View
     var playerListView: some View {
-        List($playerList) { $player in
+        List($playerList.sorted(by: {
+            let lhs = $0.wrappedValue
+            let rhs = $1.wrappedValue
+            if lhs.winningPercentage > rhs.winningPercentage {
+                return true
+            } else {
+                return lhs.name < rhs.name
+            }
+        } )) { $player in
             playerRow(player: player)
         }
     }
@@ -79,7 +90,7 @@ private extension PlayerCreationView {
         HStack {
             Text(player.name)
             Text(player.gender.displayText)
-            Text("\(String(format: "%.2f", player.rating))")
+            Text("\(String(format: "%.2f", player.winningPercentage))")
             
             if let isSelected = selectedPlayers[player], isSelected {
                 Image(systemName: "checkmark")
@@ -111,6 +122,14 @@ private extension PlayerCreationView {
         withAnimation {
             let currentSelection = selectedPlayers[player] ?? false
             selectedPlayers[player] = !currentSelection
+        }
+    }
+    
+    private func selectAllPlayers() {
+        withAnimation {
+            selectedPlayers = playerList.reduce(into: [Player: Bool]()) {
+                $0[$1] = true
+            }
         }
     }
 

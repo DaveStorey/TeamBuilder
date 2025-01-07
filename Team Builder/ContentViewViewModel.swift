@@ -7,8 +7,6 @@
 
 import Foundation
 import CoreData
-import Combine
-
 
 class ContentViewViewModel: ObservableObject {
     @Published var playerList: [Player] = []
@@ -22,7 +20,6 @@ class ContentViewViewModel: ObservableObject {
     @Published var ratingVariance = 0.4
     @Published var teamDiffError = false
     static public private(set) var generationCount = 0
-    private var disposeBag: [AnyCancellable] = []
     
     private func createTeams() {
         generateTeams()
@@ -38,7 +35,7 @@ class ContentViewViewModel: ObservableObject {
             ContentViewViewModel.generationCount = 0
             return
         }
-        if ContentViewViewModel.generationCount < 100 {
+        if ContentViewViewModel.generationCount < 200 {
             if teamDifferential < bestOptionTeams.0 {
                 bestOptionTeams = (teamDifferential, preliminaryTeams)
             }
@@ -135,9 +132,12 @@ class ContentViewViewModel: ObservableObject {
     }
 
     
-    func choseBestOption() {
+    func choseBestOption(_ choseBestOption: Bool) {
         teamDiffError = false
-        teams = bestOptionTeams.1
+        ContentViewViewModel.generationCount = 0
+        if choseBestOption {
+            teams = bestOptionTeams.1
+        }
     }
     
     func addPlayerViewAppear() {
@@ -147,6 +147,7 @@ class ContentViewViewModel: ObservableObject {
     func randomize() {
         teams = []
         preliminaryTeams = []
+        bestOptionTeams = (10, [])
         createTeams()
     }
     

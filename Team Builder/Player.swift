@@ -42,7 +42,7 @@ class Player: Identifiable, Equatable, Hashable, Codable {
     }
     
     var winningPercentage: Double {
-        return (Double(wins) / Double(wins + losses))
+        wins + losses > 0 ? (Double(wins) / Double(wins + losses)) : 0.0
     }
     
     static func == (lhs: Player, rhs: Player) -> Bool {
