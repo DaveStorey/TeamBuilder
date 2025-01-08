@@ -34,9 +34,7 @@ struct ContentView: View {
                 if !viewModel.selectedPlayers.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Build Teams", action: {
-                            withAnimation {
-                                viewModel.randomize()
-                            }
+                            Task { await viewModel.randomize() }
                         })
                     }
                 }
