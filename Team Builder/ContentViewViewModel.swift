@@ -26,25 +26,25 @@ class ContentViewViewModel: ObservableObject {
     private func createTeams() {
         generateTeams()
         guard !preliminaryTeams.isEmpty else { return }
-        (maxRating, minRating) = preliminaryTeams.reduce(into: (maxRating, minRating)) { result, team in
-            result.0 = max(result.0, team.averageRating)
-            result.1 = min(result.1, team.averageRating)
-        }
-        let teamDifferential = minRating.distance(to: maxRating)
-        guard teamDifferential > ratingVariance else {
-            teams = preliminaryTeams
-            preliminaryTeams.removeAll()
-            reset()
-            return
-        }
-        if ContentViewViewModel.generationCount < 200 {
+        var teamDifferential = maxRating.distance(to: minRating)
+        while teamDifferential > ratingVariance && ContentViewViewModel.generationCount < 600 {
+            generateTeams()
+            (maxRating, minRating) = preliminaryTeams.reduce(into: (0, 10)) { result, team in
+                result.0 = max(result.0, team.averageRating)
+                result.1 = min(result.1, team.averageRating)
+            }
+            teamDifferential = minRating.distance(to: maxRating)
             if teamDifferential < bestOptionTeams.0 {
                 bestOptionTeams = (teamDifferential, preliminaryTeams)
             }
             ContentViewViewModel.generationCount += 1
-            randomize()
-        } else {
+        }
+        if bestOptionTeams.0 > ratingVariance {
             teamDiffError = true
+        } else {
+            teams = bestOptionTeams.1
+            preliminaryTeams.removeAll()
+            reset()
         }
     }
     
