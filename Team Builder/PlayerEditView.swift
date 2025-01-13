@@ -8,10 +8,19 @@
 import SwiftUI
 
 struct PlayerEditView: View {
+    private enum Field {
+        case name
+        case gender
+        case rating
+        case wins
+        case losses
+        case ties
+    }
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) var viewContext
     @Binding var player: Player
+    @FocusState private var focusedField: Field?
     
     // A reusable TextField component to reduce redundancy
     private func playerTextField(title: String, value: Binding<Int>) -> some View {
@@ -34,6 +43,7 @@ struct PlayerEditView: View {
                     TextField("Player Name", text: $player.name)
                         .textFieldStyle(.roundedBorder)
                         .autocorrectionDisabled(true)
+                        .focused($focusedField, equals: .name)
                 }
 
                 // Gender Match Picker
@@ -43,6 +53,7 @@ struct PlayerEditView: View {
                         Text("WMP").tag(GenderMatch.wmp)
                     }
                     .pickerStyle(SegmentedPickerStyle()) // A more user-friendly style
+                    .focused($focusedField, equals: .gender)
                 }
 
                 // Rating Section
@@ -50,21 +61,25 @@ struct PlayerEditView: View {
                     TextField("Player Rating", value: $player.overallRating, format: .number)
                         .textFieldStyle(.roundedBorder)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .rating)
                 }
 
                 // Wins Section
                 SectionView(title: "Wins") {
                     playerTextField(title: "Player Wins", value: $player.wins)
+                        .focused($focusedField, equals: .wins)
                 }
 
                 // Losses Section
                 SectionView(title: "Losses") {
                     playerTextField(title: "Player Losses", value: $player.losses)
+                        .focused($focusedField, equals: .losses)
                 }
                 
                 // Ties Section
                 SectionView(title: "Ties") {
                     playerTextField(title: "Player Ties", value: $player.ties)
+                        .focused($focusedField, equals: .ties)
                 }
 
                 // Save Button
@@ -81,6 +96,9 @@ struct PlayerEditView: View {
                 }
             }
             .padding()
+            .onTapGesture {
+                focusedField = nil
+            }
         }
     }
 
