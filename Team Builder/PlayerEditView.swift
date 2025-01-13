@@ -61,6 +61,11 @@ struct PlayerEditView: View {
                 SectionView(title: "Losses") {
                     playerTextField(title: "Player Losses", value: $player.losses)
                 }
+                
+                // Ties Section
+                SectionView(title: "Ties") {
+                    playerTextField(title: "Player Ties", value: $player.ties)
+                }
 
                 // Save Button
                 Button(action: {

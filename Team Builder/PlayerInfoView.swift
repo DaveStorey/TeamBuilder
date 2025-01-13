@@ -26,6 +26,7 @@ struct PlayerInfoView: View {
                     // Player Stats Section
                     PlayerStatView(label: "Wins", value: "\(player.wins)")
                     PlayerStatView(label: "Losses", value: "\(player.losses)")
+                    PlayerStatView(label: "Ties", value: "\(player.ties)")
                     PlayerStatView(label: "Winning Percentage", value: String(format: "%g", player.winningPercentage))
                     
                     Spacer()

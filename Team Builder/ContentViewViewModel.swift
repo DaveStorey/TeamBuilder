@@ -14,6 +14,8 @@ class ContentViewViewModel: ObservableObject {
     @Published var teams: [Roster] = []
     public private(set) var bestOptionTeams: (Double, [Roster]) = (10, [])
     private var preliminaryTeams: [Roster] = []
+    private var maxRating = 0.0
+    private var minRating = 10.0
     @Published var playerName: String = ""
     @Published var playerRating: Double = 0.0
     @Published var numberOfTeams: Int = 2
@@ -24,7 +26,7 @@ class ContentViewViewModel: ObservableObject {
     private func createTeams() {
         generateTeams()
         guard !preliminaryTeams.isEmpty else { return }
-        let (maxRating, minRating) = preliminaryTeams.reduce(into: (0.0, 10.0)) { result, team in
+        (maxRating, minRating) = preliminaryTeams.reduce(into: (maxRating, minRating)) { result, team in
             result.0 = max(result.0, team.averageRating)
             result.1 = min(result.1, team.averageRating)
         }
@@ -32,7 +34,7 @@ class ContentViewViewModel: ObservableObject {
         guard teamDifferential > ratingVariance else {
             teams = preliminaryTeams
             preliminaryTeams.removeAll()
-            ContentViewViewModel.generationCount = 0
+            reset()
             return
         }
         if ContentViewViewModel.generationCount < 200 {
@@ -134,10 +136,17 @@ class ContentViewViewModel: ObservableObject {
     
     func choseBestOption(_ choseBestOption: Bool) {
         teamDiffError = false
-        ContentViewViewModel.generationCount = 0
         if choseBestOption {
             teams = bestOptionTeams.1
         }
+        reset()
+    }
+    
+    private func reset() {
+        ContentViewViewModel.generationCount = 0
+        maxRating = 0.0
+        minRating = 10.0
+        bestOptionTeams = (10, [])
     }
     
     func addPlayerViewAppear() {
@@ -147,22 +156,37 @@ class ContentViewViewModel: ObservableObject {
     func randomize() {
         teams = []
         preliminaryTeams = []
-        bestOptionTeams = (10, [])
         createTeams()
     }
     
-    func teamWin(_ team: String, context: NSManagedObjectContext) {
+    func teamResult(_ result: String, team: String, context: NSManagedObjectContext) {
         let roster = teams.first { $0.name == team }!
+        if result == "Win" {
+            teamWin(roster, context: context)
+        } else if result == "Loss" {
+            teamLoss(roster, context: context)
+        } else if result == "Tie" {
+            teamTie(roster, context: context)
+        }
+    }
+    
+    func teamWin(_ roster: Roster, context: NSManagedObjectContext) {
         for player in roster.players {
             player.wins += 1
             player.updatePlayer(context: context)
         }
     }
     
-    func teamLoss(_ team: String, context: NSManagedObjectContext) {
-        let roster = teams.first { $0.name == team }!
+    func teamLoss(_ roster: Roster, context: NSManagedObjectContext) {
         for player in roster.players {
             player.losses += 1
+            player.updatePlayer(context: context)
+        }
+    }
+    
+    func teamTie(_ roster: Roster, context: NSManagedObjectContext) {
+        for player in roster.players {
+            player.ties += 1
             player.updatePlayer(context: context)
         }
     }
