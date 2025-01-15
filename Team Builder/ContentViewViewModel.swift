@@ -21,13 +21,13 @@ class ContentViewViewModel: ObservableObject {
     @Published var numberOfTeams: Int = 2
     @Published var ratingVariance = 0.4
     @Published var teamDiffError = false
-    static public private(set) var generationCount = 0
+    private var generationCount = 0
     
     private func createTeams() {
         generateTeams()
         guard !preliminaryTeams.isEmpty else { return }
         var teamDifferential = maxRating.distance(to: minRating)
-        while teamDifferential > ratingVariance && ContentViewViewModel.generationCount < 600 {
+        while teamDifferential > ratingVariance && generationCount < 600 {
             generateTeams()
             (maxRating, minRating) = preliminaryTeams.reduce(into: (0, 10)) { result, team in
                 result.0 = max(result.0, team.averageRating)
@@ -37,7 +37,7 @@ class ContentViewViewModel: ObservableObject {
             if teamDifferential < bestOptionTeams.0 {
                 bestOptionTeams = (teamDifferential, preliminaryTeams)
             }
-            ContentViewViewModel.generationCount += 1
+            generationCount += 1
         }
         if bestOptionTeams.0 > ratingVariance {
             teamDiffError = true
@@ -143,7 +143,7 @@ class ContentViewViewModel: ObservableObject {
     }
     
     private func reset() {
-        ContentViewViewModel.generationCount = 0
+        generationCount = 0
         maxRating = 0.0
         minRating = 10.0
         bestOptionTeams = (10, [])
