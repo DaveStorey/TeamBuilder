@@ -29,13 +29,10 @@ struct TeamResultView: View {
                 Picker(selection: $winLoss, label: Text("Win/Loss")) {
                     Text("Win").tag("Win")
                     Text("Loss").tag("Loss")
+                    Text("Tie").tag("Tie")
                 }
                 Button(action: {
-                    if winLoss == "Loss" {
-                        viewModel.teamLoss(team, context: viewContext)
-                    } else if winLoss == "Win" {
-                        viewModel.teamWin(team, context: viewContext)
-                    }
+                    viewModel.teamResult(winLoss, team: team, context: viewContext)
                     self.dismiss.callAsFunction()
                 }, label: { Text(verbatim: "Save").foregroundStyle(.white) })
                 .padding()

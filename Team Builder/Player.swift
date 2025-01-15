@@ -28,13 +28,15 @@ class Player: Identifiable, Equatable, Hashable, Codable {
     var createDate = Date()
     var wins: Int
     var losses: Int
+    var ties: Int
     
-    init(name: String, overallRating: Double, match: GenderMatch = .mmp, wins: Int = 0, losses: Int = 0) {
+    init(name: String, overallRating: Double, match: GenderMatch = .mmp, wins: Int = 0, losses: Int = 0, ties: Int = 0) {
         self.name = name
         self.overallRating = overallRating
         self.gender = match
         self.wins = wins
         self.losses = losses
+        self.ties = ties
     }
     
     var rating: Double {
@@ -42,7 +44,7 @@ class Player: Identifiable, Equatable, Hashable, Codable {
     }
     
     var winningPercentage: Double {
-        wins + losses > 0 ? (Double(wins) / Double(wins + losses)) : 0.0
+        wins + ties + losses > 0 ? ((Double(wins) + (Double(ties) * 0.5)) / Double(wins + ties + losses)) : 0.0
     }
     
     static func == (lhs: Player, rhs: Player) -> Bool {
@@ -76,6 +78,7 @@ class Player: Identifiable, Equatable, Hashable, Codable {
         testPlayer.overallRating = overallRating
         testPlayer.wins = Int16(wins)
         testPlayer.losses = Int16(losses)
+        testPlayer.ties = Int16(ties)
         do {
             context.insert(testPlayer)
             try context.save()
