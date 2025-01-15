@@ -22,36 +22,59 @@ class ContentViewViewModel: ObservableObject {
     @Published var ratingVariance = 0.4
     @Published var teamDiffError = false
     private var generationCount = 0
+    private var taskCount = 0
     
-    private func createTeams() {
-        generateTeams()
-        guard !preliminaryTeams.isEmpty else { return }
-        var teamDifferential = maxRating.distance(to: minRating)
-        while teamDifferential > ratingVariance && generationCount < 600 {
-            generateTeams()
-            (maxRating, minRating) = preliminaryTeams.reduce(into: (0, 10)) { result, team in
-                result.0 = max(result.0, team.averageRating)
-                result.1 = min(result.1, team.averageRating)
+//    @MainActor
+//    private func createTeams() async {
+//        generateTeams()
+//        guard !preliminaryTeams.isEmpty else { return }
+//        var teamDifferential = maxRating.distance(to: minRating)
+//        while teamDifferential > ratingVariance && generationCount < 600 {
+//            generateTeams()
+//            (maxRating, minRating) = preliminaryTeams.reduce(into: (0, 10)) { result, team in
+//                result.0 = max(result.0, team.averageRating)
+//                result.1 = min(result.1, team.averageRating)
+//            }
+//            teamDifferential = minRating.distance(to: maxRating)
+//            if teamDifferential < bestOptionTeams.0 {
+//                bestOptionTeams = (teamDifferential, preliminaryTeams)
+//            }
+//            generationCount += 1
+//        }
+//        if bestOptionTeams.0 > ratingVariance {
+//            teamDiffError = true
+//        } else {
+//            teams = bestOptionTeams.1
+//            preliminaryTeams.removeAll()
+//            reset()
+//        }
+//    }
+    
+    @MainActor
+    private func testAsyncCreation() async {
+//        testGenerateTeams()
+//        guard !preliminaryTeams.isEmpty else { return }
+        var potentialAsyncTeams: [[Roster]] = []
+        var testTeams: [Roster] = []
+        while testTeams.isEmpty && generationCount < 600 {
+            for _ in 1...100 {
+                let teams = await testGenerateTeams()
+                potentialAsyncTeams.append(teams)
+                generationCount += 1
             }
-            teamDifferential = minRating.distance(to: maxRating)
-            if teamDifferential < bestOptionTeams.0 {
-                bestOptionTeams = (teamDifferential, preliminaryTeams)
-            }
-            generationCount += 1
+            testTeams = potentialAsyncTeams.first(where: { $0.differential <= ratingVariance }) ?? []
         }
-        if bestOptionTeams.0 > ratingVariance {
+        teams = testTeams
+        if testTeams.isEmpty{
             teamDiffError = true
-        } else {
-            teams = bestOptionTeams.1
-            preliminaryTeams.removeAll()
-            reset()
         }
+        reset()
     }
     
-    func generateTeams() {
+    private func testGenerateTeams() async -> [Roster] {
         // Initialize teams and gender limits
         var teamNumbers: [Int: (Int, Int)] = [:] // Track team assignments (mmpCount, wmpCount)
-        preliminaryTeams = (1...numberOfTeams).map { Roster(name: "Team \($0)") }
+        var preliminaryTestTeams = (1...numberOfTeams).map { Roster(name: "Team \($0)") }
         (1...numberOfTeams).forEach { teamNumbers[$0] = (0, 0) }
         
         let selectedRoster = selectedPlayers.filter { $0.value }.keys
@@ -68,11 +91,38 @@ class ContentViewViewModel: ObservableObject {
         var wmpPlayerQueue = selectedWMP.shuffled()
         
         // First, distribute players to ensure each team gets at least 1 player of each gender if possible
-        distributePlayersToTeams(mmpQueue: &mmpPlayerQueue, wmpQueue: &wmpPlayerQueue, teamNumbers: &teamNumbers, maxMMPPerTeam: maxMMPPerTeam, maxWMPPerTeam: maxWMPPerTeam, maxPlayersPerTeam: maxPlayersPerTeam)
+        distributePlayersToTeams(mmpQueue: &mmpPlayerQueue, wmpQueue: &wmpPlayerQueue, teamNumbers: &teamNumbers, maxMMPPerTeam: maxMMPPerTeam, maxWMPPerTeam: maxWMPPerTeam, maxPlayersPerTeam: maxPlayersPerTeam, prelims: &preliminaryTestTeams)
         
         // Phase 2: Distribute any leftover players (if there are any left in the queues)
-        distributeLeftoverPlayers(mmpQueue: &mmpPlayerQueue, wmpQueue: &wmpPlayerQueue, teamNumbers: &teamNumbers, maxPlayersPerTeam: maxPlayersPerTeam)
+        distributeLeftoverPlayers(mmpQueue: &mmpPlayerQueue, wmpQueue: &wmpPlayerQueue, teamNumbers: &teamNumbers, maxPlayersPerTeam: maxPlayersPerTeam, prelims: &preliminaryTestTeams)
+        return preliminaryTestTeams
     }
+    
+//    func generateTeams() {
+//        // Initialize teams and gender limits
+//        var teamNumbers: [Int: (Int, Int)] = [:] // Track team assignments (mmpCount, wmpCount)
+//        preliminaryTeams = (1...numberOfTeams).map { Roster(name: "Team \($0)") }
+//        (1...numberOfTeams).forEach { teamNumbers[$0] = (0, 0) }
+//        
+//        let selectedRoster = selectedPlayers.filter { $0.value }.keys
+//        let selectedMMP = selectedRoster.filter { $0.gender == .mmp }
+//        let selectedWMP = selectedRoster.filter { $0.gender == .wmp }
+//        
+//        // Calculate the maximum number of players per team, ensuring no more than 1 difference
+//        let maxPlayersPerTeam = calculateMaxPlayers(forMMP: selectedRoster.count)
+//        let maxMMPPerTeam = calculateMaxPlayers(forMMP: selectedMMP.count)
+//        let maxWMPPerTeam = calculateMaxPlayers(forMMP: selectedWMP.count)
+//
+//        // Phase 1: Distribute MMP and WMP players evenly across teams, ensuring no team is missing a gender
+//        var mmpPlayerQueue = selectedMMP.shuffled()
+//        var wmpPlayerQueue = selectedWMP.shuffled()
+//        
+//        // First, distribute players to ensure each team gets at least 1 player of each gender if possible
+//        distributePlayersToTeams(mmpQueue: &mmpPlayerQueue, wmpQueue: &wmpPlayerQueue, teamNumbers: &teamNumbers, maxMMPPerTeam: maxMMPPerTeam, maxWMPPerTeam: maxWMPPerTeam, maxPlayersPerTeam: maxPlayersPerTeam, prelims: &<#[Roster]#>)
+//
+//        // Phase 2: Distribute any leftover players (if there are any left in the queues)
+//        distributeLeftoverPlayers(mmpQueue: &mmpPlayerQueue, wmpQueue: &wmpPlayerQueue, teamNumbers: &teamNumbers, maxPlayersPerTeam: maxPlayersPerTeam)
+//    }
 
     // Helper function to calculate max number of players per team
     private func calculateMaxPlayers(forMMP totalPlayerCount: Int) -> Int {
@@ -80,13 +130,13 @@ class ContentViewViewModel: ObservableObject {
     }
 
     // Phase 1: Distribute players evenly and respect gender balance constraints
-    private func distributePlayersToTeams(mmpQueue: inout [Player], wmpQueue: inout [Player], teamNumbers: inout [Int: (Int, Int)], maxMMPPerTeam: Int, maxWMPPerTeam: Int, maxPlayersPerTeam: Int) {
+    private func distributePlayersToTeams(mmpQueue: inout [Player], wmpQueue: inout [Player], teamNumbers: inout [Int: (Int, Int)], maxMMPPerTeam: Int, maxWMPPerTeam: Int, maxPlayersPerTeam: Int, prelims: inout [Roster]) {
         // Distribute MMP players first
         while !mmpQueue.isEmpty {
             for teamIndex in teamNumbers.keys.sorted() {
                 if let (mmpCount, wmpCount) = teamNumbers[teamIndex], mmpCount < maxMMPPerTeam && (mmpCount + wmpCount) < maxPlayersPerTeam {
                     let player = mmpQueue.removeFirst()
-                    preliminaryTeams[teamIndex - 1].players.append(player)
+                    prelims[teamIndex - 1].players.append(player)
                     teamNumbers[teamIndex] = (mmpCount + 1, wmpCount)
                     if mmpQueue.isEmpty { break }
                 }
@@ -98,7 +148,7 @@ class ContentViewViewModel: ObservableObject {
             for teamIndex in teamNumbers.keys.sorted() {
                 if let (mmpCount, wmpCount) = teamNumbers[teamIndex], wmpCount < maxWMPPerTeam && (mmpCount + wmpCount) < maxPlayersPerTeam {
                     let player = wmpQueue.removeFirst()
-                    preliminaryTeams[teamIndex - 1].players.append(player)
+                    prelims[teamIndex - 1].players.append(player)
                     teamNumbers[teamIndex] = (mmpCount, wmpCount + 1)
                     if wmpQueue.isEmpty { break }
                 }
@@ -107,13 +157,13 @@ class ContentViewViewModel: ObservableObject {
     }
 
     // Phase 2: Distribute any leftover players across teams
-    private func distributeLeftoverPlayers(mmpQueue: inout [Player], wmpQueue: inout [Player], teamNumbers: inout [Int: (Int, Int)], maxPlayersPerTeam: Int) {
+    private func distributeLeftoverPlayers(mmpQueue: inout [Player], wmpQueue: inout [Player], teamNumbers: inout [Int: (Int, Int)], maxPlayersPerTeam: Int, prelims: inout [Roster]) {
         // Distribute any remaining MMP players across teams
         while !mmpQueue.isEmpty {
             for teamIndex in teamNumbers.keys.sorted() {
                 if let (mmpCount, wmpCount) = teamNumbers[teamIndex], (mmpCount + wmpCount) < maxPlayersPerTeam {
                     let player = mmpQueue.removeFirst()
-                    preliminaryTeams[teamIndex - 1].players.append(player)
+                    prelims[teamIndex - 1].players.append(player)
                     teamNumbers[teamIndex] = (mmpCount + 1, wmpCount)
                     if mmpQueue.isEmpty { break }
                 }
@@ -125,7 +175,7 @@ class ContentViewViewModel: ObservableObject {
             for teamIndex in teamNumbers.keys.sorted() {
                 if let (mmpCount, wmpCount) = teamNumbers[teamIndex], (mmpCount + wmpCount) < maxPlayersPerTeam {
                     let player = wmpQueue.removeFirst()
-                    preliminaryTeams[teamIndex - 1].players.append(player)
+                    prelims[teamIndex - 1].players.append(player)
                     teamNumbers[teamIndex] = (mmpCount, wmpCount + 1)
                     if wmpQueue.isEmpty { break }
                 }
@@ -153,10 +203,11 @@ class ContentViewViewModel: ObservableObject {
         selectedPlayers.removeAll()
     }
     
-    func randomize() {
+    @MainActor
+    func randomize() async {
         teams = []
         preliminaryTeams = []
-        createTeams()
+        await testAsyncCreation()
     }
     
     func teamResult(_ result: String, team: String, context: NSManagedObjectContext) {
