@@ -36,13 +36,17 @@ class ContentViewViewModel: ObservableObject {
                 generationCount += 1
             }
             testTeams = potentialAsyncTeams.first(where: { $0.differential <= ratingVariance }) ?? []
+            if let option = potentialAsyncTeams.first(where: { $0.differential <= bestOptionTeams.0 }) {
+                bestOptionTeams = (option.differential, option)
+            }
             potentialAsyncTeams = []
         }
         teams = testTeams
         if testTeams.isEmpty{
             teamDiffError = true
+        } else {
+            reset()
         }
-        reset()
     }
     
     private func testGenerateTeams() async -> [Roster] {
