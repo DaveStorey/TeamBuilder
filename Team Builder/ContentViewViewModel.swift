@@ -31,8 +31,8 @@ class ContentViewViewModel: ObservableObject {
         while testTeams.isEmpty && generationCount < 600 {
             // Generating teams in batches of 100, checking for a team that fits criteria, then resetting and firing another batch
             for _ in 1...100 {
-                let teams = await testGenerateTeams()
-                potentialAsyncTeams.append(teams)
+                async let teams = testGenerateTeams()
+                await potentialAsyncTeams.append(teams)
                 generationCount += 1
             }
             testTeams = potentialAsyncTeams.first(where: { $0.differential <= ratingVariance }) ?? []
