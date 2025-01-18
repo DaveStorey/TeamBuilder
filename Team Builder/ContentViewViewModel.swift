@@ -85,7 +85,7 @@ class ContentViewViewModel: ObservableObject {
     private func distributePlayersToTeams(mmpQueue: inout [Player], wmpQueue: inout [Player], teamNumbers: inout [Int: (Int, Int)], maxMMPPerTeam: Int, maxWMPPerTeam: Int, maxPlayersPerTeam: Int, prelims: inout [Roster]) async {
         // Distribute MMP players first
         while !mmpQueue.isEmpty {
-            for teamIndex in teamNumbers.keys.sorted() {
+            for teamIndex in teamNumbers.keys {
                 if let (mmpCount, wmpCount) = teamNumbers[teamIndex], mmpCount < maxMMPPerTeam && (mmpCount + wmpCount) < maxPlayersPerTeam {
                     let player = mmpQueue.removeFirst()
                     prelims[teamIndex - 1].players.append(player)
@@ -94,10 +94,10 @@ class ContentViewViewModel: ObservableObject {
                 }
             }
         }
-
-        // Distribute WMP players next
+        // Distribute WMP players next, ensuring that teams with a lower number of MMP get more WMP
+        let updatedTeamNumbers = teamNumbers.sorted(by: { $0.value.0 < $1.value.0 }).map { $0.key }
         while !wmpQueue.isEmpty {
-            for teamIndex in teamNumbers.keys.sorted() {
+            for teamIndex in updatedTeamNumbers {
                 if let (mmpCount, wmpCount) = teamNumbers[teamIndex], wmpCount < maxWMPPerTeam && (mmpCount + wmpCount) < maxPlayersPerTeam {
                     let player = wmpQueue.removeFirst()
                     prelims[teamIndex - 1].players.append(player)
