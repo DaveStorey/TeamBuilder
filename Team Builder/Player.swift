@@ -8,7 +8,7 @@
 import Foundation
 import CoreData
 
-enum GenderMatch: String, Codable, Equatable, CaseIterable {
+enum GenderMatch: String, Equatable, CaseIterable {
     case mmp = "MMP"
     case wmp = "WMP"
     
@@ -20,12 +20,11 @@ enum GenderMatch: String, Codable, Equatable, CaseIterable {
     }
 }
 
-class Player: Identifiable, Equatable, Hashable, Codable {
+class Player: Identifiable, Equatable, Hashable {
     
     var name: String
     var overallRating: Double
     var gender: GenderMatch
-    var createDate = Date()
     var wins: Int
     var losses: Int
     var ties: Int
@@ -54,7 +53,7 @@ class Player: Identifiable, Equatable, Hashable, Codable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(name)
         hasher.combine(overallRating)
-        hasher.combine(createDate)
+        hasher.combine(winningPercentage)
     }
     
     func deletePlayers(context: NSManagedObjectContext) {

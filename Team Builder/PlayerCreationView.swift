@@ -75,7 +75,10 @@ private extension PlayerCreationView {
         List($playerList.sorted(by: {
             let lhs = $0.wrappedValue
             let rhs = $1.wrappedValue
+            // Order players by winning percentage, then games played, then name
             if lhs.winningPercentage > rhs.winningPercentage {
+                return true
+            } else if lhs.wins > rhs.wins {
                 return true
             } else {
                 return lhs.name < rhs.name
@@ -226,6 +229,10 @@ private extension PlayerCreationView {
         do {
             let persistedPlayers = try viewContext.fetch(fetchRequest)
             persistedPlayers.forEach { persistedPlayer in
+                // Printing player info on load in console for easy stat checking/compiling
+                #if DEBUG
+                print("\(persistedPlayer.name ?? "No Name")(\(persistedPlayer.overallRating)): wins: \(persistedPlayer.wins)\n losses: \(persistedPlayer.losses)\n ties: \(persistedPlayer.ties)")
+                #endif
                 if let match = GenderMatch(rawValue: persistedPlayer.gender ?? "MMP"),
                    !playerList.contains(where: { $0.name == persistedPlayer.name && $0.rating == persistedPlayer.overallRating }) {
                     playerList.append(Player(name: persistedPlayer.name ?? "",
