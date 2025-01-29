@@ -73,16 +73,8 @@ private extension PlayerCreationView {
     // MARK: - Player List View
     var playerListView: some View {
         List($playerList.sorted(by: {
-            let lhs = $0.wrappedValue
-            let rhs = $1.wrappedValue
-            // Order players by winning percentage, then games played, then name
-            if lhs.winningPercentage > rhs.winningPercentage {
-                return true
-            } else if lhs.wins > rhs.wins {
-                return true
-            } else {
-                return lhs.name < rhs.name
-            }
+            // Order players by winning percentage
+            $0.wrappedValue.winningPercentage > $1.wrappedValue.winningPercentage
         } )) { $player in
             playerRow(player: player)
         }
