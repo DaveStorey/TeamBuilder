@@ -8,7 +8,7 @@
 import Foundation
 import CoreData
 
-class Roster: Identifiable, Equatable, Codable, Hashable {
+class Roster: Identifiable, Equatable, Hashable {
     
     var name: String
     var players: [Player]
@@ -39,10 +39,6 @@ class Roster: Identifiable, Equatable, Codable, Hashable {
     
     func hasReachedGenderLimit(gender: GenderMatch, limit: Int) -> Bool {
         self.players.filter({ $0.gender == gender }).count >= limit
-    }
-    
-    func encoded() -> Data? {
-        return try? JSONEncoder().encode(self)
     }
     
     func numberOfPlayers(for gender: GenderMatch) -> Int {

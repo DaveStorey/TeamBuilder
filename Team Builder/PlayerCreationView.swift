@@ -239,7 +239,8 @@ private extension PlayerCreationView {
                                               overallRating: persistedPlayer.overallRating,
                                               match: match,
                                               wins: Int(persistedPlayer.wins),
-                                              losses: Int(persistedPlayer.losses)))
+                                              losses: Int(persistedPlayer.losses),
+                                              ties: Int(persistedPlayer.ties)))
                 }
             }
         } catch {

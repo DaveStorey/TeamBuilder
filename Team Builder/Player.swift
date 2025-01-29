@@ -89,7 +89,7 @@ class Player: Identifiable, Equatable, Hashable {
     func updatePlayer(context: NSManagedObjectContext) {
         let updateRequest = NSBatchUpdateRequest(entityName: "PersistedPlayer")
         updateRequest.predicate = NSPredicate(format: "name == %@", name)
-        updateRequest.propertiesToUpdate = ["wins": Int16(wins), "losses": Int16(losses)]
+        updateRequest.propertiesToUpdate = ["wins": Int16(wins), "losses": Int16(losses), "ties": Int16(ties)]
         updateRequest.resultType = .updatedObjectIDsResultType
         do {
             let _ = try context.execute(updateRequest)
