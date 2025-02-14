@@ -22,12 +22,49 @@ enum GenderMatch: String, Equatable, CaseIterable {
 
 class Player: Identifiable, Equatable, Hashable {
     
-    var name: String
-    var overallRating: Double
-    var gender: GenderMatch
-    var wins: Int
-    var losses: Int
-    var ties: Int
+    var name: String {
+        didSet {
+            if name != oldValue {
+                updateFields.updateValue(name, forKey: "name")
+            }
+        }
+    }
+    var overallRating: Double {
+        didSet {
+            if overallRating != oldValue {
+                updateFields.updateValue(overallRating, forKey: "overallRating")
+            }
+        }
+    }
+    var gender: GenderMatch {
+        didSet {
+            if gender != oldValue {
+                updateFields.updateValue(gender.rawValue, forKey: "gender")
+            }
+        }
+    }
+    var wins: Int {
+        didSet {
+            if wins != oldValue {
+                updateFields.updateValue(Int16(wins), forKey: "wins")
+            }
+        }
+    }
+    var losses: Int {
+        didSet {
+            if losses != oldValue {
+                updateFields.updateValue(Int16(losses), forKey: "losses")
+            }
+        }
+    }
+    var ties: Int {
+        didSet {
+            if ties != oldValue {
+                updateFields.updateValue(Int16(ties), forKey: "ties")
+            }
+        }
+    }
+    var updateFields: [String: Any] = [:]
     
     init(name: String, overallRating: Double, match: GenderMatch = .mmp, wins: Int = 0, losses: Int = 0, ties: Int = 0) {
         self.name = name
@@ -89,10 +126,11 @@ class Player: Identifiable, Equatable, Hashable {
     func updatePlayer(context: NSManagedObjectContext) {
         let updateRequest = NSBatchUpdateRequest(entityName: "PersistedPlayer")
         updateRequest.predicate = NSPredicate(format: "name == %@", name)
-        updateRequest.propertiesToUpdate = ["wins": Int16(wins), "losses": Int16(losses), "ties": Int16(ties)]
+        updateRequest.propertiesToUpdate = updateFields
         updateRequest.resultType = .updatedObjectIDsResultType
         do {
             let _ = try context.execute(updateRequest)
+            updateFields = [:]
         } catch(let error) {
             print("Persistence update error: \(error.localizedDescription)")
         }
