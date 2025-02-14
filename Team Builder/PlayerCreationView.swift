@@ -180,15 +180,13 @@ private extension PlayerCreationView {
     private func savePlayer() {
         let newPlayer = Player(name: playerName, overallRating: playerRating, match: playerMatch)
         newPlayer.savePlayer(context: viewContext)
-        
-        if !playerList.contains(where: { $0.name == newPlayer.name && $0.rating == newPlayer.rating }) {
+        if !playerList.contains(where: { $0.name == newPlayer.name && $0.overallRating == newPlayer.overallRating }) {
             playerList.append(newPlayer)
         }
         
-        if !selectedPlayers.contains(where: { $0.key.name == newPlayer.name && $0.key.rating == newPlayer.rating }) {
+        if !selectedPlayers.contains(where: { $0.key.name == newPlayer.name && $0.key.overallRating == newPlayer.overallRating }) {
             selectedPlayers[newPlayer] = true
         }
-        
         clearPlayerFields()
     }
     
@@ -229,13 +227,16 @@ private extension PlayerCreationView {
                 print("\(persistedPlayer.name ?? "No Name")(\(persistedPlayer.overallRating)): wins: \(persistedPlayer.wins)\n losses: \(persistedPlayer.losses)\n ties: \(persistedPlayer.ties)")
                 #endif
                 if let match = GenderMatch(rawValue: persistedPlayer.gender ?? "MMP"),
-                   !playerList.contains(where: { $0.name == persistedPlayer.name && $0.rating == persistedPlayer.overallRating }) {
+                   !playerList.contains(where: { $0.name == persistedPlayer.name && $0.overallRating == persistedPlayer.overallRating }) {
                     playerList.append(Player(name: persistedPlayer.name ?? "",
-                                              overallRating: persistedPlayer.overallRating,
-                                              match: match,
-                                              wins: Int(persistedPlayer.wins),
-                                              losses: Int(persistedPlayer.losses),
-                                              ties: Int(persistedPlayer.ties)))
+                                            overallRating: persistedPlayer.overallRating,
+                                            throwRating: persistedPlayer.throwRating,
+                                            cutRating: persistedPlayer.cutRating,
+                                            defenseRating: persistedPlayer.defenseRating,
+                                            match: match,
+                                            wins: Int(persistedPlayer.wins),
+                                            losses: Int(persistedPlayer.losses),
+                                            ties: Int(persistedPlayer.ties)))
                 }
             }
         } catch {

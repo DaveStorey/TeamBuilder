@@ -34,7 +34,7 @@ struct PlayerInfoView: View {
                         .frame(height: 50)
                     
                     // Edit Button
-                    NavigationLink(destination: PlayerEditView(player: $player)) {
+                    NavigationLink(destination: PlayerEditView(player: $player, frozenPlayer: player)) {
                         Text("Edit")
                             .foregroundColor(.white)
                             .padding()

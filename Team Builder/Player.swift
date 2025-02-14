@@ -20,26 +20,70 @@ enum GenderMatch: String, Equatable, CaseIterable {
     }
 }
 
+enum PropertyUpdate: Equatable {
+    
+    case name(String)
+    case overallRating(Double)
+    case throwRating(Double)
+    case cutRating(Double)
+    case defenseRating(Double)
+    case gender(GenderMatch)
+    case wins(Int)
+    case losses(Int)
+    case ties(Int)
+    
+    var updateValue: (String, Any) {
+        switch self {
+        case .name(let value): ("name", value)
+        case .overallRating(let value): ("overallRating", value)
+        case .throwRating(let value): ("throwRating", value)
+        case .cutRating(let value): ("cutRating", value)
+        case .defenseRating(let value): ("defenseRating", value)
+        case .gender(let value): ("gender", value)
+        case .wins(let value): ("wins", value)
+        case .losses(let value): ("losses", value)
+        case .ties(let value): ("ties", value)
+        }
+    }
+
+}
+
 class Player: Identifiable, Equatable, Hashable {
     
     var name: String
     var overallRating: Double
+    var throwRating: Double
+    var cutRating: Double
+    var defenseRating: Double
     var gender: GenderMatch
     var wins: Int
     var losses: Int
     var ties: Int
+    let idString: String = UUID().uuidString
     
-    init(name: String, overallRating: Double, match: GenderMatch = .mmp, wins: Int = 0, losses: Int = 0, ties: Int = 0) {
+    init(name: String,
+         overallRating: Double,
+         throwRating: Double = 0.0,
+         cutRating: Double = 0.0,
+         defenseRating: Double = 0.0,
+         match: GenderMatch = .mmp,
+         wins: Int = 0,
+         losses: Int = 0,
+         ties: Int = 0) {
         self.name = name
         self.overallRating = overallRating
+        self.throwRating = throwRating
+        self.cutRating = cutRating
+        self.defenseRating = defenseRating
         self.gender = match
         self.wins = wins
         self.losses = losses
         self.ties = ties
+        
     }
     
-    var rating: Double {
-        return overallRating
+    var offensiveRating: Double {
+        return (throwRating + cutRating) / 2.0
     }
     
     var winningPercentage: Double {
@@ -47,7 +91,39 @@ class Player: Identifiable, Equatable, Hashable {
     }
     
     static func == (lhs: Player, rhs: Player) -> Bool {
-        lhs.name == rhs.name && lhs.rating == rhs.rating
+        lhs.idString == rhs.idString
+    }
+    
+    func compareTo(_ other: Player) -> [PropertyUpdate] {
+        var updatedProperties: [PropertyUpdate] = []
+        if other.name != name {
+            updatedProperties.append(.name(name))
+        }
+        if other.overallRating != overallRating {
+            updatedProperties.append(.overallRating(overallRating))
+        }
+        if other.throwRating != throwRating {
+            updatedProperties.append(.throwRating(throwRating))
+        }
+        if other.cutRating != cutRating {
+            updatedProperties.append(.cutRating(cutRating))
+        }
+        if other.defenseRating != defenseRating {
+            updatedProperties.append(.defenseRating(defenseRating))
+        }
+        if other.gender != gender {
+            updatedProperties.append(.gender(gender))
+        }
+        if other.wins != wins {
+            updatedProperties.append(.wins(wins))
+        }
+        if other.losses != losses {
+            updatedProperties.append(.losses(losses))
+        }
+        if other.ties != ties {
+            updatedProperties.append(.ties(ties))
+        }
+        return updatedProperties
     }
     
     func hash(into hasher: inout Hasher) {
@@ -59,7 +135,7 @@ class Player: Identifiable, Equatable, Hashable {
     func deletePlayers(context: NSManagedObjectContext) {
         let fetch: NSFetchRequest<NSFetchRequestResult>
         fetch = NSFetchRequest(entityName: "PersistedPlayer")
-        fetch.predicate = NSPredicate(format: "name == %@", name)
+        fetch.predicate = NSPredicate(format: "id == %@", idString)
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetch)
         deleteRequest.resultType = .resultTypeStatusOnly
         do {
@@ -70,26 +146,34 @@ class Player: Identifiable, Equatable, Hashable {
     }
     
     func savePlayer(context: NSManagedObjectContext) {
-        let testPlayer = PersistedPlayer(context: context)
-        testPlayer.name = name
-        testPlayer.createDate = Date()
-        testPlayer.gender = gender.rawValue
-        testPlayer.overallRating = overallRating
-        testPlayer.wins = Int16(wins)
-        testPlayer.losses = Int16(losses)
-        testPlayer.ties = Int16(ties)
+        let savedPlayer = PersistedPlayer(context: context)
+        savedPlayer.name = name
+        savedPlayer.createDate = Date()
+        savedPlayer.gender = gender.rawValue
+        savedPlayer.overallRating = overallRating
+        savedPlayer.wins = Int16(wins)
+        savedPlayer.losses = Int16(losses)
+        savedPlayer.ties = Int16(ties)
+        savedPlayer.throwRating = throwRating
+        savedPlayer.cutRating = cutRating
+        savedPlayer.defenseRating = defenseRating
+        savedPlayer.idString = idString
         do {
-            context.insert(testPlayer)
+            context.insert(savedPlayer)
             try context.save()
         } catch(let error) {
             print("Persistence context error: \(error.localizedDescription)")
         }
     }
     
-    func updatePlayer(context: NSManagedObjectContext) {
+    func updatePlayer(_ properties: [PropertyUpdate], context: NSManagedObjectContext) {
+        var updateProperties: [String: Any] = [:]
+        for property in properties {
+            updateProperties.updateValue(property.updateValue.1, forKey: property.updateValue.0)
+        }
         let updateRequest = NSBatchUpdateRequest(entityName: "PersistedPlayer")
-        updateRequest.predicate = NSPredicate(format: "name == %@", name)
-        updateRequest.propertiesToUpdate = ["wins": Int16(wins), "losses": Int16(losses), "ties": Int16(ties)]
+        updateRequest.predicate = NSPredicate(format: "id == %@", idString)
+        updateRequest.propertiesToUpdate = updateProperties
         updateRequest.resultType = .updatedObjectIDsResultType
         do {
             let _ = try context.execute(updateRequest)

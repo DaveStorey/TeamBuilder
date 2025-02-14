@@ -173,21 +173,21 @@ class ContentViewViewModel: ObservableObject {
     func teamWin(_ roster: Roster, context: NSManagedObjectContext) {
         for player in roster.players {
             player.wins += 1
-            player.updatePlayer(context: context)
+            player.updatePlayer([.wins(player.wins)], context: context)
         }
     }
     
     func teamLoss(_ roster: Roster, context: NSManagedObjectContext) {
         for player in roster.players {
             player.losses += 1
-            player.updatePlayer(context: context)
+            player.updatePlayer([.losses(player.losses)], context: context)
         }
     }
     
     func teamTie(_ roster: Roster, context: NSManagedObjectContext) {
         for player in roster.players {
             player.ties += 1
-            player.updatePlayer(context: context)
+            player.updatePlayer([.ties(player.ties)], context: context)
         }
     }
     

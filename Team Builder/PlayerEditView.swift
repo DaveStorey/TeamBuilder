@@ -21,6 +21,7 @@ struct PlayerEditView: View {
     @Environment(\.managedObjectContext) var viewContext
     @Binding var player: Player
     @FocusState private var focusedField: Field?
+    let frozenPlayer: Player
     
     // A reusable TextField component to reduce redundancy
     private func playerTextField(title: String, value: Binding<Int>) -> some View {
@@ -84,7 +85,8 @@ struct PlayerEditView: View {
 
                 // Save Button
                 Button(action: {
-                    player.updatePlayer(context: viewContext)
+                    let updated = player.compareTo(frozenPlayer)
+                    player.updatePlayer(updated, context: viewContext)
                     dismiss()
                 }) {
                     Text("Save Player")
