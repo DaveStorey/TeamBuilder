@@ -11,6 +11,7 @@
 		150C902B2BD1D3CB003BE366 /* TeamOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150C902A2BD1D3CB003BE366 /* TeamOptionsView.swift */; };
 		150FDAC72D284C47001D2D17 /* TeamResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150FDAC62D284C47001D2D17 /* TeamResultView.swift */; };
 		150FDAC92D288A3B001D2D17 /* PlayerInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150FDAC82D288A3B001D2D17 /* PlayerInfoView.swift */; };
+		15335E0B2D6E627E002FB631 /* PlayerCreationViewMultiRating.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15335E0A2D6E627E002FB631 /* PlayerCreationViewMultiRating.swift */; };
 		15AF8CDD2C8F5650000DB659 /* JsonDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AF8CDC2C8F5650000DB659 /* JsonDecoder.swift */; };
 		15D0A5462C7E2E7000563477 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D0A5452C7E2E7000563477 /* Extensions.swift */; };
 		15D0A5492C875E4900563477 /* PersistedRoster.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 15D0A5472C875E4900563477 /* PersistedRoster.xcdatamodeld */; };
@@ -51,6 +52,7 @@
 		150C902A2BD1D3CB003BE366 /* TeamOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamOptionsView.swift; sourceTree = "<group>"; };
 		150FDAC62D284C47001D2D17 /* TeamResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamResultView.swift; sourceTree = "<group>"; };
 		150FDAC82D288A3B001D2D17 /* PlayerInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerInfoView.swift; sourceTree = "<group>"; };
+		15335E0A2D6E627E002FB631 /* PlayerCreationViewMultiRating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCreationViewMultiRating.swift; sourceTree = "<group>"; };
 		15AF8CDC2C8F5650000DB659 /* JsonDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JsonDecoder.swift; sourceTree = "<group>"; };
 		15D0A5452C7E2E7000563477 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		15D0A5482C875E4900563477 /* PersistedRoster.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = PersistedRoster.xcdatamodel; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 				150FDAC62D284C47001D2D17 /* TeamResultView.swift */,
 				150FDAC82D288A3B001D2D17 /* PlayerInfoView.swift */,
 				15F496A22D2C2C2F00FA347D /* PlayerEditView.swift */,
+				15335E0A2D6E627E002FB631 /* PlayerCreationViewMultiRating.swift */,
 			);
 			path = "Team Builder";
 			sourceTree = "<group>";
@@ -307,6 +310,7 @@
 				15E4D7722BB49FF200E51A50 /* Persistence.swift in Sources */,
 				15E4D76B2BB49FF000E51A50 /* ContentView.swift in Sources */,
 				150FDAC72D284C47001D2D17 /* TeamResultView.swift in Sources */,
+				15335E0B2D6E627E002FB631 /* PlayerCreationViewMultiRating.swift in Sources */,
 				150C90292BD1CD9D003BE366 /* League.swift in Sources */,
 				15E4D7752BB49FF200E51A50 /* PersistedPlayer.xcdatamodeld in Sources */,
 				150C902B2BD1D3CB003BE366 /* TeamOptionsView.swift in Sources */,

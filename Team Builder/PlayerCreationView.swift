@@ -32,7 +32,7 @@ struct PlayerCreationView: View {
                 rosterHeader
                 playerListView
                 playerBuilder
-                saveButton
+//                saveButton
             }
         }
         .toolbar {
@@ -133,22 +133,18 @@ private extension PlayerCreationView {
 
     // MARK: - Player Builder
     var playerBuilder: some View {
-        VStack(spacing: 5) {
-            playerNameField
-            genderPicker
-            playerRatingField
-        }
+        NavigationLink("Create Player", destination: { PlayerCreationViewMultiRating(playerList: $playerList) })
         .frame(height: 175)
     }
     
-    private var playerNameField: some View {
-        TextField("Player Name", text: $playerName)
-            .padding([.horizontal])
-            .textFieldStyle(.roundedBorder)
-            .focused($isFocused)
-            .autocorrectionDisabled(true)
-    }
-    
+//    private var playerNameField: some View {
+//        TextField("Player Name", text: $playerName)
+//            .padding([.horizontal])
+//            .textFieldStyle(.roundedBorder)
+//            .focused($isFocused)
+//            .autocorrectionDisabled(true)
+//    }
+//    
     private var genderPicker: some View {
         Picker("Gender Match", selection: $playerMatch) {
             Text("MMP").tag(GenderMatch.mmp)
@@ -156,39 +152,39 @@ private extension PlayerCreationView {
         }
         .pickerStyle(InlinePickerStyle())
     }
-
-    private var playerRatingField: some View {
-        TextField("Player Rating", value: $playerRating, format: .number)
-            .padding([.horizontal])
-            .textFieldStyle(.roundedBorder)
-            .keyboardType(.decimalPad)
-    }
-
-    // MARK: - Save Button
-    private var saveButton: some View {
-        Button("Save") {
-            withAnimation { savePlayer() }
-        }
-        .padding()
-        .background(.blue)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .foregroundColor(.white)
-        .onSubmit { isFocused = false }
-    }
-    
-    // MARK: - Player Management
-    private func savePlayer() {
-        let newPlayer = Player(name: playerName, overallRating: playerRating, match: playerMatch)
-        newPlayer.savePlayer(context: viewContext)
-        if !playerList.contains(where: { $0.name == newPlayer.name && $0.overallRating == newPlayer.overallRating }) {
-            playerList.append(newPlayer)
-        }
-        
-        if !selectedPlayers.contains(where: { $0.key.name == newPlayer.name && $0.key.overallRating == newPlayer.overallRating }) {
-            selectedPlayers[newPlayer] = true
-        }
-        clearPlayerFields()
-    }
+//
+//    private var playerRatingField: some View {
+//        TextField("Player Rating", value: $playerRating, format: .number)
+//            .padding([.horizontal])
+//            .textFieldStyle(.roundedBorder)
+//            .keyboardType(.decimalPad)
+//    }
+//
+//    // MARK: - Save Button
+//    private var saveButton: some View {
+//        Button("Save") {
+//            withAnimation { savePlayer() }
+//        }
+//        .padding()
+//        .background(.blue)
+//        .clipShape(RoundedRectangle(cornerRadius: 10))
+//        .foregroundColor(.white)
+//        .onSubmit { isFocused = false }
+//    }
+//    
+//    // MARK: - Player Management
+//    private func savePlayer() {
+//        let newPlayer = Player(name: playerName, overallRating: playerRating, match: playerMatch)
+//        newPlayer.savePlayer(context: viewContext)
+//        if !playerList.contains(where: { $0.name == newPlayer.name && $0.overallRating == newPlayer.overallRating }) {
+//            playerList.append(newPlayer)
+//        }
+//        
+//        if !selectedPlayers.contains(where: { $0.key.name == newPlayer.name && $0.key.overallRating == newPlayer.overallRating }) {
+//            selectedPlayers[newPlayer] = true
+//        }
+//        clearPlayerFields()
+//    }
     
     private func playerDelete(_ player: Player) {
         playerList.removeAll { $0.name == player.name }

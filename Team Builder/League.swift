@@ -37,6 +37,18 @@ class Roster: Identifiable, Equatable, Hashable {
         return avg / Double(players.count)
     }
     
+    var averageThrowRating: Double {
+        players.isEmpty ? 0 : players.map { $0.throwRating }.reduce(0, +) / Double(players.count)
+    }
+        
+    var averageCutRating: Double {
+        players.isEmpty ? 0 : players.map { $0.cutRating }.reduce(0, +) / Double(players.count)
+    }
+        
+    var averageDefenseRating: Double {
+        players.isEmpty ? 0 : players.map { $0.defenseRating }.reduce(0, +) / Double(players.count)
+    }
+    
     func hasReachedGenderLimit(gender: GenderMatch, limit: Int) -> Bool {
         self.players.filter({ $0.gender == gender }).count >= limit
     }

@@ -26,20 +26,42 @@ class ContentViewViewModel: ObservableObject {
     private func createTeams() {
         generateTeams()
         guard !preliminaryTeams.isEmpty else { return }
-        var teamDifferential = maxRating.distance(to: minRating)
-        while teamDifferential > ratingVariance && generationCount < 600 {
+
+        var bestThrowDiff = Double.greatestFiniteMagnitude
+        var bestCutDiff = Double.greatestFiniteMagnitude
+        var bestDefenseDiff = Double.greatestFiniteMagnitude
+
+        while (bestThrowDiff > ratingVariance || bestCutDiff > ratingVariance || bestDefenseDiff > ratingVariance) && generationCount < 600 {
             generateTeams()
-            (maxRating, minRating) = preliminaryTeams.reduce(into: (0, 10)) { result, team in
-                result.0 = max(result.0, team.averageRating)
-                result.1 = min(result.1, team.averageRating)
+
+            var (maxThrow, minThrow) = (0.0, 10.0)
+            var (maxCut, minCut) = (0.0, 10.0)
+            var (maxDefense, minDefense) = (0.0, 10.0)
+
+            preliminaryTeams.forEach { team in
+                maxThrow = max(maxThrow, team.averageThrowRating)
+                minThrow = min(minThrow, team.averageThrowRating)
+                maxCut = max(maxCut, team.averageCutRating)
+                minCut = min(minCut, team.averageCutRating)
+                maxDefense = max(maxDefense, team.averageDefenseRating)
+                minDefense = min(minDefense, team.averageDefenseRating)
             }
-            teamDifferential = minRating.distance(to: maxRating)
-            if teamDifferential < bestOptionTeams.0 {
-                bestOptionTeams = (teamDifferential, preliminaryTeams)
+
+            bestThrowDiff = maxThrow - minThrow
+            bestCutDiff = maxCut - minCut
+            bestDefenseDiff = maxDefense - minDefense
+
+            let totalDiff = bestThrowDiff + bestCutDiff + bestDefenseDiff
+            let currentBestDiff = bestOptionTeams.0
+
+            if totalDiff < currentBestDiff {
+                bestOptionTeams = (totalDiff, preliminaryTeams)
             }
+            
             generationCount += 1
         }
-        if bestOptionTeams.0 > ratingVariance {
+        
+        if bestThrowDiff > ratingVariance || bestCutDiff > ratingVariance || bestDefenseDiff > ratingVariance {
             teamDiffError = true
         } else {
             teams = bestOptionTeams.1
@@ -47,92 +69,58 @@ class ContentViewViewModel: ObservableObject {
             reset()
         }
     }
+
     
     func generateTeams() {
-        // Initialize teams and gender limits
-        var teamNumbers: [Int: (Int, Int)] = [:] // Track team assignments (mmpCount, wmpCount)
         preliminaryTeams = (1...numberOfTeams).map { Roster(name: "Team \($0)") }
-        (1...numberOfTeams).forEach { teamNumbers[$0] = (0, 0) }
         
         let selectedRoster = selectedPlayers.filter { $0.value }.keys
-        let selectedMMP = selectedRoster.filter { $0.gender == .mmp }
-        let selectedWMP = selectedRoster.filter { $0.gender == .wmp }
+        var selectedMMP = selectedRoster.filter { $0.gender == .mmp }.shuffled()
+        var selectedWMP = selectedRoster.filter { $0.gender == .wmp }.shuffled()
         
-        // Calculate the maximum number of players per team, ensuring no more than 1 difference
-        let maxPlayersPerTeam = calculateMaxPlayers(forMMP: selectedRoster.count)
-        let maxMMPPerTeam = calculateMaxPlayers(forMMP: selectedMMP.count)
-        let maxWMPPerTeam = calculateMaxPlayers(forMMP: selectedWMP.count)
-
-        // Phase 1: Distribute MMP and WMP players evenly across teams, ensuring no team is missing a gender
-        var mmpPlayerQueue = selectedMMP.shuffled()
-        var wmpPlayerQueue = selectedWMP.shuffled()
+        let maxMMPPerTeam = calculateMaxPlayers(for: selectedMMP.count)
+        let maxWMPPerTeam = calculateMaxPlayers(for: selectedWMP.count)
         
-        // First, distribute players to ensure each team gets at least 1 player of each gender if possible
-        distributePlayersToTeams(mmpQueue: &mmpPlayerQueue, wmpQueue: &wmpPlayerQueue, teamNumbers: &teamNumbers, maxMMPPerTeam: maxMMPPerTeam, maxWMPPerTeam: maxWMPPerTeam, maxPlayersPerTeam: maxPlayersPerTeam)
+        var teamNumbers: [Int: (Int, Int)] = [:] // Tracks (MMP count, WMP count) per team
+        (1...numberOfTeams).forEach { teamNumbers[$0] = (0, 0) }
         
-        // Phase 2: Distribute any leftover players (if there are any left in the queues)
-        distributeLeftoverPlayers(mmpQueue: &mmpPlayerQueue, wmpQueue: &wmpPlayerQueue, teamNumbers: &teamNumbers, maxPlayersPerTeam: maxPlayersPerTeam)
+        // Unified distribution function for MMP and WMP players
+        distributePlayers(&selectedMMP, &selectedWMP, maxMMPPerTeam, maxWMPPerTeam, &teamNumbers)
     }
 
     // Helper function to calculate max number of players per team
-    private func calculateMaxPlayers(forMMP totalPlayerCount: Int) -> Int {
+    private func calculateMaxPlayers(for totalPlayerCount: Int) -> Int {
         return Int((Double(totalPlayerCount) / Double(numberOfTeams)).rounded(.awayFromZero))
     }
 
-    // Phase 1: Distribute players evenly and respect gender balance constraints
-    private func distributePlayersToTeams(mmpQueue: inout [Player], wmpQueue: inout [Player], teamNumbers: inout [Int: (Int, Int)], maxMMPPerTeam: Int, maxWMPPerTeam: Int, maxPlayersPerTeam: Int) {
-        // Distribute MMP players first
-        while !mmpQueue.isEmpty {
-            for teamIndex in teamNumbers.keys {
-                if let (mmpCount, wmpCount) = teamNumbers[teamIndex], mmpCount < maxMMPPerTeam && (mmpCount + wmpCount) < maxPlayersPerTeam {
-                    let player = mmpQueue.removeFirst()
-                    preliminaryTeams[teamIndex - 1].players.append(player)
-                    teamNumbers[teamIndex] = (mmpCount + 1, wmpCount)
-                    if mmpQueue.isEmpty { break }
-                }
-            }
-        }
-        // Distribute WMP players next, ensuring that teams with a lower number of MMP get more WMP
-        let updatedTeamNumbers = teamNumbers.sorted(by: { $0.value.0 < $1.value.0 }).map { $0.key }
-        while !wmpQueue.isEmpty {
-            for teamIndex in updatedTeamNumbers {
-                if let (mmpCount, wmpCount) = teamNumbers[teamIndex], wmpCount < maxWMPPerTeam && (mmpCount + wmpCount) < maxPlayersPerTeam {
-                    let player = wmpQueue.removeFirst()
-                    preliminaryTeams[teamIndex - 1].players.append(player)
-                    teamNumbers[teamIndex] = (mmpCount, wmpCount + 1)
-                    if wmpQueue.isEmpty { break }
+    private func distributePlayers(_ mmpQueue: inout [Player], _ wmpQueue: inout [Player], _ maxMMPPerTeam: Int, _ maxWMPPerTeam: Int, _ teamNumbers: inout [Int: (Int, Int)]) {
+        let teamOrder = (1...numberOfTeams).shuffled() // Prevents bias
+
+        while !mmpQueue.isEmpty || !wmpQueue.isEmpty {
+            for teamIndex in teamOrder {
+                if let (mmpCount, wmpCount) = teamNumbers[teamIndex] {
+                    let totalPlayers = mmpCount + wmpCount
+
+                    // Distribute MMP if there's room and we haven't exceeded the max
+                    if !mmpQueue.isEmpty, mmpCount < maxMMPPerTeam, totalPlayers < calculateMaxPlayers(for: mmpQueue.count + wmpQueue.count) {
+                        let player = mmpQueue.removeFirst()
+                        preliminaryTeams[teamIndex - 1].players.append(player)
+                        teamNumbers[teamIndex] = (mmpCount + 1, wmpCount)
+                    }
+
+                    // Distribute WMP similarly
+                    if !wmpQueue.isEmpty, wmpCount < maxWMPPerTeam, totalPlayers < calculateMaxPlayers(for: mmpQueue.count + wmpQueue.count) {
+                        let player = wmpQueue.removeFirst()
+                        preliminaryTeams[teamIndex - 1].players.append(player)
+                        teamNumbers[teamIndex] = (mmpCount, wmpCount + 1)
+                    }
+                    
+                    // Stop early if queues are empty
+                    if mmpQueue.isEmpty && wmpQueue.isEmpty { return }
                 }
             }
         }
     }
-
-    // Phase 2: Distribute any leftover players across teams
-    private func distributeLeftoverPlayers(mmpQueue: inout [Player], wmpQueue: inout [Player], teamNumbers: inout [Int: (Int, Int)], maxPlayersPerTeam: Int) {
-        // Distribute any remaining MMP players across teams
-        while !mmpQueue.isEmpty {
-            for teamIndex in teamNumbers.keys.sorted() {
-                if let (mmpCount, wmpCount) = teamNumbers[teamIndex], (mmpCount + wmpCount) < maxPlayersPerTeam {
-                    let player = mmpQueue.removeFirst()
-                    preliminaryTeams[teamIndex - 1].players.append(player)
-                    teamNumbers[teamIndex] = (mmpCount + 1, wmpCount)
-                    if mmpQueue.isEmpty { break }
-                }
-            }
-        }
-
-        // Distribute any remaining WMP players across teams
-        while !wmpQueue.isEmpty {
-            for teamIndex in teamNumbers.keys.sorted() {
-                if let (mmpCount, wmpCount) = teamNumbers[teamIndex], (mmpCount + wmpCount) < maxPlayersPerTeam {
-                    let player = wmpQueue.removeFirst()
-                    preliminaryTeams[teamIndex - 1].players.append(player)
-                    teamNumbers[teamIndex] = (mmpCount, wmpCount + 1)
-                    if wmpQueue.isEmpty { break }
-                }
-            }
-        }
-    }
-
     
     func choseBestOption(_ choseBestOption: Bool) {
         teamDiffError = false
