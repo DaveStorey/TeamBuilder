@@ -24,29 +24,22 @@ struct PlayerCreationViewMultiRating: View {
         Form {
             Section(header: Text("Player Information")) {
                 TextField("Name", text: $name)
+                    .autocorrectionDisabled()
                 genderPicker
             }
             
             Section(header: Text("Ratings")) {
-                Slider(value: $overallRating, in: 0...10, step: 0.01) {
-                    Text("Overall Rating")
-                }
-                Text("Overall Rating: \(overallRating, specifier: "%.2f")")
+                Text("Overall Rating")
+                playerRatingField(title: "Overall Rating", rating: $overallRating)
                 
-                Slider(value: $throwRating, in: 0...10, step: 0.01) {
-                    Text("Throw Rating")
-                }
-                Text("Throw Rating: \(throwRating, specifier: "%.2f")")
+                Text("Throw Rating")
+                playerRatingField(title: "Throw Rating", rating: $throwRating)
                 
-                Slider(value: $cutRating, in: 0...10, step: 0.01) {
-                    Text("Cut Rating")
-                }
-                Text("Cut Rating: \(cutRating, specifier: "%.2f")")
+                Text("Cut Rating")
+                playerRatingField(title: "Cut Rating", rating: $cutRating)
                 
-                Slider(value: $defenseRating, in: 0...10, step: 0.01) {
-                    Text("Defense Rating")
-                }
-                Text("Defense Rating: \(defenseRating, specifier: "%.2f")")
+                Text("Defense Rating")
+                playerRatingField(title: "Defense Rating", rating: $defenseRating)
             }
             
             Section(header: Text("Record")) {
@@ -78,6 +71,13 @@ extension PlayerCreationViewMultiRating {
         .pickerStyle(InlinePickerStyle())
     }
     
+    private func playerRatingField(title: String, rating: Binding<Double>) -> some View {
+        TextField(title, value: rating, format: .number)
+            .padding([.horizontal])
+            .textFieldStyle(.roundedBorder)
+            .keyboardType(.decimalPad)
+    }
+    
     private func savePlayer() {
         let newPlayer = Player(name: name,
                                overallRating: overallRating,
@@ -92,9 +92,5 @@ extension PlayerCreationViewMultiRating {
         if !playerList.contains(where: { $0.name == newPlayer.name && $0.overallRating == newPlayer.overallRating }) {
             playerList.append(newPlayer)
         }
-        
-//        if !selectedPlayers.contains(where: { $0.key.name == newPlayer.name && $0.key.overallRating == newPlayer.overallRating }) {
-//            selectedPlayers[newPlayer] = true
-//        }
     }
 }

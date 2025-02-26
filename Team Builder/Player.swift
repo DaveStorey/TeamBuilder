@@ -59,7 +59,7 @@ class Player: Identifiable, Equatable, Hashable {
     var wins: Int
     var losses: Int
     var ties: Int
-    let idString: String = UUID().uuidString
+    let idString: String
     
     init(name: String,
          overallRating: Double,
@@ -69,7 +69,8 @@ class Player: Identifiable, Equatable, Hashable {
          match: GenderMatch = .mmp,
          wins: Int = 0,
          losses: Int = 0,
-         ties: Int = 0) {
+         ties: Int = 0,
+         idString: String = UUID().uuidString) {
         self.name = name
         self.overallRating = overallRating
         self.throwRating = throwRating
@@ -79,7 +80,7 @@ class Player: Identifiable, Equatable, Hashable {
         self.wins = wins
         self.losses = losses
         self.ties = ties
-        
+        self.idString = idString
     }
     
     var offensiveRating: Double {
@@ -135,7 +136,7 @@ class Player: Identifiable, Equatable, Hashable {
     func deletePlayers(context: NSManagedObjectContext) {
         let fetch: NSFetchRequest<NSFetchRequestResult>
         fetch = NSFetchRequest(entityName: "PersistedPlayer")
-        fetch.predicate = NSPredicate(format: "id == %@", idString)
+        fetch.predicate = NSPredicate(format: "idString == %@", idString)
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetch)
         deleteRequest.resultType = .resultTypeStatusOnly
         do {
@@ -172,7 +173,7 @@ class Player: Identifiable, Equatable, Hashable {
             updateProperties.updateValue(property.updateValue.1, forKey: property.updateValue.0)
         }
         let updateRequest = NSBatchUpdateRequest(entityName: "PersistedPlayer")
-        updateRequest.predicate = NSPredicate(format: "id == %@", idString)
+        updateRequest.predicate = NSPredicate(format: "idString == %@", idString)
         updateRequest.propertiesToUpdate = updateProperties
         updateRequest.resultType = .updatedObjectIDsResultType
         do {
