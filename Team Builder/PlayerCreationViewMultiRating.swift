@@ -29,17 +29,23 @@ struct PlayerCreationViewMultiRating: View {
             }
             
             Section(header: Text("Ratings")) {
-                Text("Overall Rating")
-                playerRatingField(title: "Overall Rating", rating: $overallRating)
-                
-                Text("Throw Rating")
-                playerRatingField(title: "Throw Rating", rating: $throwRating)
-                
-                Text("Cut Rating")
-                playerRatingField(title: "Cut Rating", rating: $cutRating)
-                
-                Text("Defense Rating")
-                playerRatingField(title: "Defense Rating", rating: $defenseRating)
+                VStack(spacing: 5) {
+                    Text("Overall Rating")
+                        .font(.callout)
+                    playerRatingField(title: "Overall Rating", rating: $overallRating)
+                    ratingSpacer
+                    Text("Throw Rating")
+                        .font(.callout)
+                    playerRatingField(title: "Throw Rating", rating: $throwRating)
+                    ratingSpacer
+                    Text("Cut Rating")
+                        .font(.callout)
+                    playerRatingField(title: "Cut Rating", rating: $cutRating)
+                    ratingSpacer
+                    Text("Defense Rating")
+                        .font(.callout)
+                    playerRatingField(title: "Defense Rating", rating: $defenseRating)
+                }
             }
             
             Section(header: Text("Record")) {
@@ -63,17 +69,22 @@ struct PlayerCreationViewMultiRating: View {
 
 extension PlayerCreationViewMultiRating {
     
+    var ratingSpacer: some View {
+        Spacer()
+            .frame(height: 15)
+    }
+    
     private var genderPicker: some View {
         Picker("Gender Match", selection: $gender) {
             Text("MMP").tag(GenderMatch.mmp)
             Text("WMP").tag(GenderMatch.wmp)
         }
-        .pickerStyle(InlinePickerStyle())
+        .pickerStyle(.segmented)
     }
     
     private func playerRatingField(title: String, rating: Binding<Double>) -> some View {
         TextField(title, value: rating, format: .number)
-            .padding([.horizontal])
+            //.padding([.horizontal])
             .textFieldStyle(.roundedBorder)
             .keyboardType(.decimalPad)
     }

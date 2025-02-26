@@ -32,7 +32,6 @@ struct PlayerCreationView: View {
                 rosterHeader
                 playerListView
                 playerBuilder
-//                saveButton
             }
         }
         .toolbar {

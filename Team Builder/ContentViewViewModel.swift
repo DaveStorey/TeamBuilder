@@ -71,7 +71,7 @@ class ContentViewViewModel: ObservableObject {
     }
 
     
-    func generateTeams() {
+    private func generateTeams() {
         preliminaryTeams = (1...numberOfTeams).map { Roster(name: "Team \($0)") }
         
         let selectedRoster = selectedPlayers.filter { $0.value }.keys
@@ -94,7 +94,7 @@ class ContentViewViewModel: ObservableObject {
     }
 
     private func distributePlayers(_ mmpQueue: inout [Player], _ wmpQueue: inout [Player], _ maxMMPPerTeam: Int, _ maxWMPPerTeam: Int, _ teamNumbers: inout [Int: (Int, Int)]) {
-        let teamOrder = (1...numberOfTeams).shuffled() // Prevents bias
+        let teamOrder = (1...numberOfTeams).shuffled() // Prevents bias in cases of unequal numbers/gender ratio
         let maxPerTeam = calculateMaxPlayers(for: mmpQueue.count + wmpQueue.count)
         while !mmpQueue.isEmpty || !wmpQueue.isEmpty {
             for teamIndex in teamOrder {
