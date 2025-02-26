@@ -95,24 +95,24 @@ class ContentViewViewModel: ObservableObject {
 
     private func distributePlayers(_ mmpQueue: inout [Player], _ wmpQueue: inout [Player], _ maxMMPPerTeam: Int, _ maxWMPPerTeam: Int, _ teamNumbers: inout [Int: (Int, Int)]) {
         let teamOrder = (1...numberOfTeams).shuffled() // Prevents bias
-
+        let maxPerTeam = calculateMaxPlayers(for: mmpQueue.count + wmpQueue.count)
         while !mmpQueue.isEmpty || !wmpQueue.isEmpty {
             for teamIndex in teamOrder {
                 if let (mmpCount, wmpCount) = teamNumbers[teamIndex] {
-                    let totalPlayers = mmpCount + wmpCount
-
+                    var totalPlayers = mmpCount + wmpCount
                     // Distribute MMP if there's room and we haven't exceeded the max
-                    if !mmpQueue.isEmpty, mmpCount < maxMMPPerTeam, totalPlayers < calculateMaxPlayers(for: mmpQueue.count + wmpQueue.count) {
+                    if !mmpQueue.isEmpty, mmpCount < maxMMPPerTeam, totalPlayers < maxPerTeam {
                         let player = mmpQueue.removeFirst()
                         preliminaryTeams[teamIndex - 1].players.append(player)
-                        teamNumbers[teamIndex] = (mmpCount + 1, wmpCount)
+                        teamNumbers[teamIndex]?.0 = mmpCount + 1
+                        totalPlayers += 1
                     }
 
                     // Distribute WMP similarly
-                    if !wmpQueue.isEmpty, wmpCount < maxWMPPerTeam, totalPlayers < calculateMaxPlayers(for: mmpQueue.count + wmpQueue.count) {
+                    if !wmpQueue.isEmpty, wmpCount < maxWMPPerTeam, totalPlayers < maxPerTeam {
                         let player = wmpQueue.removeFirst()
                         preliminaryTeams[teamIndex - 1].players.append(player)
-                        teamNumbers[teamIndex] = (mmpCount, wmpCount + 1)
+                        teamNumbers[teamIndex]?.1 = wmpCount + 1
                     }
                     
                     // Stop early if queues are empty
