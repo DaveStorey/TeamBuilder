@@ -55,7 +55,7 @@ struct ContentView: View {
         }
         .popover(isPresented: $popupRosterOptions) {
             TeamOptionsView(viewModel: viewModel)
-                .presentationDetents([.height(250)])
+                .presentationDetents([.height(450)])
         }
     }
 }

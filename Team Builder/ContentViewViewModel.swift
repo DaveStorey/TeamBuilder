@@ -20,6 +20,10 @@ class ContentViewViewModel: ObservableObject {
     @Published var playerRating: Double = 0.0
     @Published var numberOfTeams: Int = 2
     @Published var ratingVariance = 0.4
+    @Published var throwVariance = 0.4
+    @Published var cutVariance = 0.4
+    @Published var defenseVariance = 0.4
+    @Published var useOverall = false
     @Published var teamDiffError = false
     private var generationCount = 0
     
@@ -30,38 +34,52 @@ class ContentViewViewModel: ObservableObject {
         var bestThrowDiff = Double.greatestFiniteMagnitude
         var bestCutDiff = Double.greatestFiniteMagnitude
         var bestDefenseDiff = Double.greatestFiniteMagnitude
-
-        while (bestThrowDiff > ratingVariance || bestCutDiff > ratingVariance || bestDefenseDiff > ratingVariance) && generationCount < 600 {
+        var totalDiff = 10.0
+        while ((bestThrowDiff > ratingVariance || bestCutDiff > ratingVariance || bestDefenseDiff > ratingVariance) &&
+               totalDiff > ratingVariance)
+                && generationCount < 600 {
             generateTeams()
 
             var (maxThrow, minThrow) = (0.0, 10.0)
             var (maxCut, minCut) = (0.0, 10.0)
             var (maxDefense, minDefense) = (0.0, 10.0)
-
-            preliminaryTeams.forEach { team in
-                maxThrow = max(maxThrow, team.averageThrowRating)
-                minThrow = min(minThrow, team.averageThrowRating)
-                maxCut = max(maxCut, team.averageCutRating)
-                minCut = min(minCut, team.averageCutRating)
-                maxDefense = max(maxDefense, team.averageDefenseRating)
-                minDefense = min(minDefense, team.averageDefenseRating)
+            var (maxRating, minRating) = (0.0, 10.0)
+            if useOverall {
+                preliminaryTeams.forEach { team in
+                    maxRating = max(maxRating, team.averageRating)
+                    minRating = min(minRating, team.averageRating)
+                }
+                totalDiff = maxRating - minRating
+            } else {
+                preliminaryTeams.forEach { team in
+                    maxThrow = max(maxThrow, team.averageThrowRating)
+                    minThrow = min(minThrow, team.averageThrowRating)
+                    maxCut = max(maxCut, team.averageCutRating)
+                    minCut = min(minCut, team.averageCutRating)
+                    maxDefense = max(maxDefense, team.averageDefenseRating)
+                    minDefense = min(minDefense, team.averageDefenseRating)
+                }
+                
+                bestThrowDiff = maxThrow - minThrow
+                bestCutDiff = maxCut - minCut
+                bestDefenseDiff = maxDefense - minDefense
+                
+                totalDiff = bestThrowDiff + bestCutDiff + bestDefenseDiff
             }
-
-            bestThrowDiff = maxThrow - minThrow
-            bestCutDiff = maxCut - minCut
-            bestDefenseDiff = maxDefense - minDefense
-
-            let totalDiff = bestThrowDiff + bestCutDiff + bestDefenseDiff
             let currentBestDiff = bestOptionTeams.0
 
             if totalDiff < currentBestDiff {
                 bestOptionTeams = (totalDiff, preliminaryTeams)
             }
-            
             generationCount += 1
         }
-        
-        if bestThrowDiff > ratingVariance || bestCutDiff > ratingVariance || bestDefenseDiff > ratingVariance {
+        let teamError: Bool
+        if useOverall {
+            teamError = bestOptionTeams.0 > ratingVariance
+        } else {
+            teamError = bestThrowDiff > throwVariance || bestCutDiff > cutVariance || bestDefenseDiff > defenseVariance
+        }
+        if teamError {
             teamDiffError = true
         } else {
             teams = bestOptionTeams.1
