@@ -28,6 +28,7 @@ struct TeamOptionsView: View {
                         .keyboardType(.numberPad)
                     
                     Toggle(isOn: $viewModel.useOverall, label: { Text("Use overall ratings") })
+                        .padding(.horizontal)
                 }
                 if !viewModel.useOverall {
                     VStack(alignment: .leading, spacing: 3) {
