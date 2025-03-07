@@ -45,7 +45,7 @@ struct ContentView: View {
         .alert(isPresented: $viewModel.teamDiffError) {
             Alert(
                 title: Text("Team Differential Error"),
-                message: Text("No teams found with the specified parameters. The best option found has a difference of \(String(format:"%g", viewModel.bestOptionTeams.0))"),
+                message: Text(viewModel.teamErrorString),
                 primaryButton: .default(Text("Use best option")) { viewModel.choseBestOption(true) },
                 secondaryButton: .cancel {
                     viewModel.choseBestOption(false)

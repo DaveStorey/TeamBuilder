@@ -24,7 +24,10 @@ struct PlayerInfoView: View {
                         .padding()
 
                     // Player Stats Section
-                    PlayerStatView(label: "Rating", value: String(format: "%g", player.overallRating))
+                    PlayerStatView(label: "Overall Rating", value: String(format: "%g", player.overallRating))
+                    PlayerStatView(label: "Throw Rating", value: String(format: "%g", player.throwRating))
+                    PlayerStatView(label: "Cut Rating", value: String(format: "%g", player.cutRating))
+                    PlayerStatView(label: "Defense Rating", value: String(format: "%g", player.defenseRating))
                     PlayerStatView(label: "Wins", value: "\(player.wins)")
                     PlayerStatView(label: "Losses", value: "\(player.losses)")
                     PlayerStatView(label: "Ties", value: "\(player.ties)")

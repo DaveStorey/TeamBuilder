@@ -8,11 +8,26 @@
 import Foundation
 import CoreData
 
+struct RatingsVariance {
+    var overall = 10.0
+    var throwing = 10.0
+    var cutting = 10.0
+    var defense = 10.0
+    
+    func compareTo(_ bestOption: RatingsVariance, useOverall: Bool) -> Bool {
+        if useOverall {
+            return overall < bestOption.overall
+        } else {
+            return (throwing + cutting + defense) < (bestOption.throwing + bestOption.cutting + bestOption.defense)
+        }
+    }
+}
+
 class ContentViewViewModel: ObservableObject {
     @Published var playerList: [Player] = []
     @Published var selectedPlayers: [Player: Bool] = [:]
     @Published var teams: [Roster] = []
-    public private(set) var bestOptionTeams: (Double, [Roster]) = (10, [])
+    public private(set) var bestOptionTeams: (RatingsVariance, [Roster]) = (RatingsVariance(), [])
     private var preliminaryTeams: [Roster] = []
     private var maxRating = 0.0
     private var minRating = 10.0
@@ -25,6 +40,7 @@ class ContentViewViewModel: ObservableObject {
     @Published var defenseVariance = 0.4
     @Published var useOverall = false
     @Published var teamDiffError = false
+    var teamErrorString = "No teams found with the specified parameters. The best option found has a difference of -0.0"
     private var generationCount = 0
     
     private func createTeams() {
@@ -34,10 +50,10 @@ class ContentViewViewModel: ObservableObject {
         var bestThrowDiff = Double.greatestFiniteMagnitude
         var bestCutDiff = Double.greatestFiniteMagnitude
         var bestDefenseDiff = Double.greatestFiniteMagnitude
-        var totalDiff = 10.0
-        while ((bestThrowDiff > ratingVariance || bestCutDiff > ratingVariance || bestDefenseDiff > ratingVariance) &&
-               totalDiff > ratingVariance)
-                && generationCount < 600 {
+        var totalDiff = RatingsVariance()
+        while ((bestThrowDiff > totalDiff.throwing || bestCutDiff > totalDiff.cutting || bestDefenseDiff > totalDiff.defense) &&
+               totalDiff.overall > ratingVariance)
+                && generationCount < 1500 {
             generateTeams()
 
             var (maxThrow, minThrow) = (0.0, 10.0)
@@ -49,7 +65,7 @@ class ContentViewViewModel: ObservableObject {
                     maxRating = max(maxRating, team.averageRating)
                     minRating = min(minRating, team.averageRating)
                 }
-                totalDiff = maxRating - minRating
+                totalDiff.overall = maxRating - minRating
             } else {
                 preliminaryTeams.forEach { team in
                     maxThrow = max(maxThrow, team.averageThrowRating)
@@ -64,20 +80,24 @@ class ContentViewViewModel: ObservableObject {
                 bestCutDiff = maxCut - minCut
                 bestDefenseDiff = maxDefense - minDefense
                 
-                totalDiff = bestThrowDiff + bestCutDiff + bestDefenseDiff
+                totalDiff.throwing = bestThrowDiff
+                totalDiff.cutting = bestCutDiff
+                totalDiff.defense = bestDefenseDiff
             }
             let currentBestDiff = bestOptionTeams.0
 
-            if totalDiff < currentBestDiff {
+            if totalDiff.compareTo(currentBestDiff, useOverall: useOverall) {
                 bestOptionTeams = (totalDiff, preliminaryTeams)
             }
             generationCount += 1
         }
         let teamError: Bool
         if useOverall {
-            teamError = bestOptionTeams.0 > ratingVariance
+            teamError = bestOptionTeams.0.overall > ratingVariance
+            teamErrorString = "No teams found with the specified parameters. The best option found has a difference of \(String(format:"%g", bestOptionTeams.0.overall))"
         } else {
             teamError = bestThrowDiff > throwVariance || bestCutDiff > cutVariance || bestDefenseDiff > defenseVariance
+            teamErrorString = "No teams found with the specified parameters. The best option found has a difference of throwing: \(String(format:"%g", bestOptionTeams.0.throwing)) \n cutting: \(String(format:"%g", bestOptionTeams.0.cutting)) \n defense: \(String(format:"%g", bestOptionTeams.0.throwing))"
         }
         if teamError {
             teamDiffError = true
@@ -152,7 +172,7 @@ class ContentViewViewModel: ObservableObject {
         generationCount = 0
         maxRating = 0.0
         minRating = 10.0
-        bestOptionTeams = (10, [])
+        bestOptionTeams = (RatingsVariance(), [])
     }
     
     func addPlayerViewAppear() {

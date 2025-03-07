@@ -11,7 +11,10 @@ struct PlayerEditView: View {
     private enum Field {
         case name
         case gender
-        case rating
+        case overallRating
+        case throwRating
+        case cutRating
+        case defenseRating
         case wins
         case losses
         case ties
@@ -58,12 +61,31 @@ struct PlayerEditView: View {
                 }
 
                 // Rating Section
-                SectionView(title: "Rating") {
-                    TextField("Player Rating", value: $player.overallRating, format: .number)
+                SectionView(title: "Overall Rating") {
+                    TextField("Overall Rating", value: $player.overallRating, format: .number)
                         .textFieldStyle(.roundedBorder)
                         .keyboardType(.decimalPad)
-                        .focused($focusedField, equals: .rating)
+                        .focused($focusedField, equals: .overallRating)
                 }
+                SectionView(title: "Throw Rating") {
+                    TextField("Throw Rating", value: $player.throwRating, format: .number)
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .throwRating)
+                }
+                SectionView(title: "Cut Rating") {
+                    TextField("Cut Rating", value: $player.cutRating, format: .number)
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .cutRating)
+                }
+                SectionView(title: "Defense Rating") {
+                    TextField("Defense Rating", value: $player.defenseRating, format: .number)
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .defenseRating)
+                }
+                
 
                 // Wins Section
                 SectionView(title: "Wins") {
