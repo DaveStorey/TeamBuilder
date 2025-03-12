@@ -14,7 +14,7 @@
 		15335E0B2D6E627E002FB631 /* PlayerCreationViewMultiRating.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15335E0A2D6E627E002FB631 /* PlayerCreationViewMultiRating.swift */; };
 		15AF8CDD2C8F5650000DB659 /* JsonDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AF8CDC2C8F5650000DB659 /* JsonDecoder.swift */; };
 		15D0A5462C7E2E7000563477 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D0A5452C7E2E7000563477 /* Extensions.swift */; };
-		15D0A5492C875E4900563477 /* PersistedRoster.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 15D0A5472C875E4900563477 /* PersistedRoster.xcdatamodeld */; };
+		15D1D3372D81F13300110B33 /* RosterInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D1D3362D81F13300110B33 /* RosterInfoView.swift */; };
 		15E4D7692BB49FF000E51A50 /* Team_BuilderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E4D7682BB49FF000E51A50 /* Team_BuilderApp.swift */; };
 		15E4D76B2BB49FF000E51A50 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E4D76A2BB49FF000E51A50 /* ContentView.swift */; };
 		15E4D76D2BB49FF200E51A50 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 15E4D76C2BB49FF200E51A50 /* Assets.xcassets */; };
@@ -55,7 +55,7 @@
 		15335E0A2D6E627E002FB631 /* PlayerCreationViewMultiRating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCreationViewMultiRating.swift; sourceTree = "<group>"; };
 		15AF8CDC2C8F5650000DB659 /* JsonDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JsonDecoder.swift; sourceTree = "<group>"; };
 		15D0A5452C7E2E7000563477 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
-		15D0A5482C875E4900563477 /* PersistedRoster.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = PersistedRoster.xcdatamodel; sourceTree = "<group>"; };
+		15D1D3362D81F13300110B33 /* RosterInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RosterInfoView.swift; sourceTree = "<group>"; };
 		15E4D7652BB49FF000E51A50 /* Team Builder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Team Builder.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		15E4D7682BB49FF000E51A50 /* Team_BuilderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Team_BuilderApp.swift; sourceTree = "<group>"; };
 		15E4D76A2BB49FF000E51A50 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -103,7 +103,6 @@
 			isa = PBXGroup;
 			children = (
 				15E4D7712BB49FF200E51A50 /* Persistence.swift */,
-				15D0A5472C875E4900563477 /* PersistedRoster.xcdatamodeld */,
 				15E4D7732BB49FF200E51A50 /* PersistedPlayer.xcdatamodeld */,
 				15AF8CDC2C8F5650000DB659 /* JsonDecoder.swift */,
 			);
@@ -141,6 +140,7 @@
 				15E4D7972BB4A1FD00E51A50 /* Player.swift */,
 				15E4D7992BB4A2A500E51A50 /* ContentViewViewModel.swift */,
 				15E4D79D2BB5E71000E51A50 /* PlayerCreationView.swift */,
+				15D1D3362D81F13300110B33 /* RosterInfoView.swift */,
 				150C90282BD1CD9D003BE366 /* League.swift */,
 				150C902A2BD1D3CB003BE366 /* TeamOptionsView.swift */,
 				15D0A5452C7E2E7000563477 /* Extensions.swift */,
@@ -312,13 +312,13 @@
 				150FDAC72D284C47001D2D17 /* TeamResultView.swift in Sources */,
 				15335E0B2D6E627E002FB631 /* PlayerCreationViewMultiRating.swift in Sources */,
 				150C90292BD1CD9D003BE366 /* League.swift in Sources */,
+				15D1D3372D81F13300110B33 /* RosterInfoView.swift in Sources */,
 				15E4D7752BB49FF200E51A50 /* PersistedPlayer.xcdatamodeld in Sources */,
 				150C902B2BD1D3CB003BE366 /* TeamOptionsView.swift in Sources */,
 				15D0A5462C7E2E7000563477 /* Extensions.swift in Sources */,
 				15E4D7982BB4A1FD00E51A50 /* Player.swift in Sources */,
 				15E4D7692BB49FF000E51A50 /* Team_BuilderApp.swift in Sources */,
 				15AF8CDD2C8F5650000DB659 /* JsonDecoder.swift in Sources */,
-				15D0A5492C875E4900563477 /* PersistedRoster.xcdatamodeld in Sources */,
 				150FDAC92D288A3B001D2D17 /* PlayerInfoView.swift in Sources */,
 				15E4D79A2BB4A2A500E51A50 /* ContentViewViewModel.swift in Sources */,
 				15F496A32D2C2C2F00FA347D /* PlayerEditView.swift in Sources */,
@@ -656,16 +656,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
-		15D0A5472C875E4900563477 /* PersistedRoster.xcdatamodeld */ = {
-			isa = XCVersionGroup;
-			children = (
-				15D0A5482C875E4900563477 /* PersistedRoster.xcdatamodel */,
-			);
-			currentVersion = 15D0A5482C875E4900563477 /* PersistedRoster.xcdatamodel */;
-			path = PersistedRoster.xcdatamodeld;
-			sourceTree = "<group>";
-			versionGroupType = wrapper.xcdatamodel;
-		};
 		15E4D7732BB49FF200E51A50 /* PersistedPlayer.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (

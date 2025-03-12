@@ -38,7 +38,7 @@ struct PlayerCreationView: View {
             ToolbarItem(placement: .destructiveAction, content: {
                 Button("Clear Roster", action: { rosterClearAlert = true })
             })
-            ToolbarItem(placement: .primaryAction, content: {
+            ToolbarItem(placement: .automatic, content: {
                 Button("Select All", action: { selectAllPlayers() })
              })
         }
@@ -132,8 +132,16 @@ private extension PlayerCreationView {
 
     // MARK: - Player Builder
     var playerBuilder: some View {
-        NavigationLink("Create Player", destination: { PlayerCreationViewMultiRating(playerList: $playerList) })
-        .frame(height: 75)
+        HStack {
+            NavigationLink(destination: { PlayerCreationViewMultiRating(playerList: $playerList) }, label: { Text("Create Player") })
+                .padding(.leading, 30)
+                .padding(.bottom, 20)
+            Spacer()
+            NavigationLink(destination: { RosterInfoView(players: playerList)}, label: { Text("Records") })
+                .padding(.trailing, 30)
+                .padding(.bottom, 20)
+        }
+        .frame(height: 65)
     }
     
     private func playerDelete(_ player: Player) {
