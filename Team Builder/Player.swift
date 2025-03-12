@@ -95,6 +95,18 @@ class Player: Identifiable, Equatable, Hashable {
         lhs.idString == rhs.idString
     }
     
+    func valueCopy() -> Player {
+        Player(name: name,
+               overallRating: overallRating,
+               throwRating: throwRating,
+               cutRating: cutRating,
+               defenseRating: defenseRating,
+               wins: wins,
+               losses: losses,
+               ties: ties,
+               idString: idString)
+    }
+    
     func compareTo(_ other: Player) -> [PropertyUpdate] {
         var updatedProperties: [PropertyUpdate] = []
         if other.name != name {
