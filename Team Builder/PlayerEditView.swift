@@ -18,91 +18,102 @@ struct PlayerEditView: View {
         case wins
         case losses
         case ties
+        
+        var fieldTitle: String {
+            switch self {
+            case .name, .gender: return ""
+            case .overallRating: return "Overall Rating"
+            case .throwRating: return "Throw Rating"
+            case .cutRating: return "Cut Rating"
+            case .defenseRating: return "Defense Rating"
+            case .wins, .losses, .ties: return String(describing: self).capitalized
+            }
+        }
     }
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) var viewContext
     @Binding var player: Player
+    @State var overallRating: Double = 0.0
+    @State var errorMessage: String? = nil
     @FocusState private var focusedField: Field?
     let frozenPlayer: Player
-    
-    // A reusable TextField component to reduce redundancy
-    private func playerTextField(title: String, value: Binding<Int>) -> some View {
-        TextField(title, value: value, format: .number)
-            .textFieldStyle(.roundedBorder)
-            .keyboardType(.numberPad)
-        }
         
     var body: some View {
         ZStack {
             Color.secondary.opacity(0.2)
                 .ignoresSafeArea()
-            ScrollView {
+            Form {
                 VStack(spacing: 20) {
                     Text("Edit \(player.name)")
                         .font(.largeTitle)
                     
                     // Name Section
-                    SectionView(title: "Name") {
-                        TextField("Player Name", text: $player.name)
-                            .textFieldStyle(.roundedBorder)
-                            .autocorrectionDisabled(true)
-                            .focused($focusedField, equals: .name)
-                    }
-                    
-                    // Gender Match Picker
-                    SectionView(title: "Gender Match") {
-                        Picker("Gender Match", selection: $player.gender) {
-                            Text("MMP").tag(GenderMatch.mmp)
-                            Text("WMP").tag(GenderMatch.wmp)
+                    Section(header: Text("Player Information")) {
+                        SectionView("Name") {
+                            TextField("Player Name", text: $player.name)
+                                .textFieldStyle(.roundedBorder)
+                                .autocorrectionDisabled(true)
+                                .focused($focusedField, equals: .name)
                         }
-                        .pickerStyle(SegmentedPickerStyle()) // A more user-friendly style
-                        .focused($focusedField, equals: .gender)
+                        
+                        // Gender Match Picker
+                        SectionView("Gender Match") {
+                            Picker("Gender Match", selection: $player.gender) {
+                                Text("MMP").tag(GenderMatch.mmp)
+                                Text("WMP").tag(GenderMatch.wmp)
+                            }
+                            .pickerStyle(SegmentedPickerStyle()) // A more user-friendly style
+                            .focused($focusedField, equals: .gender)
+                        }
                     }
                     
                     // Rating Section
-                    SectionView(title: "Overall Rating") {
-                        TextField("Overall Rating", value: $player.overallRating, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .keyboardType(.decimalPad)
-                            .focused($focusedField, equals: .overallRating)
+                    Section(header: Text("Ratings")) {
+                        VStack {
+                            if let errorMessage {
+                                Text(errorMessage)
+                                    .font(.footnote)
+                                    .foregroundStyle(.red)
+                            }
+                            SectionView("Overall Rating") {
+                                //TODO: Deal with onChange requiring the values to be state vars, not fields on a binding. Maybe use this with tracking changes to update both local and persistence?
+                                TextField("Overall Rating", value: $overallRating, format: .number)
+                                    .textFieldStyle(.roundedBorder)
+                                    .keyboardType(.decimalPad)
+                                    .focused($focusedField, equals: .overallRating)
+                                    .onChange(of: $overallRating.wrappedValue) { newValue in
+                                        print("\(newValue)")
+                                        checkRating(field: "Overall rating", rating: newValue)
+                                    }
+                            }
+                            SectionView("Throw Rating") {
+                                playerRatingField(rating: $player.throwRating, focus: .throwRating)
+                            }
+                            SectionView("Cut Rating") {
+                                playerRatingField(rating: $player.cutRating, focus: .cutRating)
+                            }
+                            SectionView("Defense Rating") {
+                                playerRatingField(rating: $player.defenseRating, focus: .defenseRating)
+                            }
+                        }
                     }
-                    SectionView(title: "Throw Rating") {
-                        TextField("Throw Rating", value: $player.throwRating, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .keyboardType(.decimalPad)
-                            .focused($focusedField, equals: .throwRating)
-                    }
-                    SectionView(title: "Cut Rating") {
-                        TextField("Cut Rating", value: $player.cutRating, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .keyboardType(.decimalPad)
-                            .focused($focusedField, equals: .cutRating)
-                    }
-                    SectionView(title: "Defense Rating") {
-                        TextField("Defense Rating", value: $player.defenseRating, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .keyboardType(.decimalPad)
-                            .focused($focusedField, equals: .defenseRating)
-                    }
-                    
                     
                     // Wins Section
-                    SectionView(title: "Wins") {
-                        playerTextField(title: "Player Wins", value: $player.wins)
-                            .focused($focusedField, equals: .wins)
-                    }
-                    
-                    // Losses Section
-                    SectionView(title: "Losses") {
-                        playerTextField(title: "Player Losses", value: $player.losses)
-                            .focused($focusedField, equals: .losses)
-                    }
-                    
-                    // Ties Section
-                    SectionView(title: "Ties") {
-                        playerTextField(title: "Player Ties", value: $player.ties)
-                            .focused($focusedField, equals: .ties)
+                    Section(header: Text("Record")) {
+                        SectionView("Wins") {
+                            playerTextField(value: $player.wins, field: .wins)
+                        }
+                        
+                        // Losses Section
+                        SectionView("Losses") {
+                            playerTextField(value: $player.losses, field: .losses)
+                        }
+                        
+                        // Ties Section
+                        SectionView("Ties") {
+                            playerTextField(value: $player.ties, field: .ties)
+                        }
                     }
                     
                     // Save Button
@@ -115,9 +126,10 @@ struct PlayerEditView: View {
                             .foregroundColor(.white)
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(.blue)
+                            .background(errorMessage != nil ? .blue : .gray)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
+                    .disabled(errorMessage != nil)
                 }
                 .padding()
                 .onTapGesture {
@@ -126,12 +138,33 @@ struct PlayerEditView: View {
             }
         }
     }
+    
+    // A reusable TextField component to reduce redundancy
+    private func playerTextField(value: Binding<Int>, field: Field) -> some View {
+        TextField(field.fieldTitle, value: value, format: .number)
+            .textFieldStyle(.roundedBorder)
+            .keyboardType(.numberPad)
+            .focused($focusedField, equals: field)
+    }
+    
+    private func playerRatingField(rating: Binding<Double>, focus: Field) -> some View {
+        VStack {
+            TextField(focus.fieldTitle, value: rating, format: .number)
+                .textFieldStyle(.roundedBorder)
+                .keyboardType(.decimalPad)
+                .focused($focusedField, equals: focus)
+                .onChange(of: rating.wrappedValue) { newValue in
+                    print("\(newValue)")
+                    checkRating(field: focus.fieldTitle, rating: newValue)
+                }
+        }
+    }
 
     struct SectionView<Content: View>: View {
         var title: String
         var content: () -> Content
 
-        init(title: String, @ViewBuilder content: @escaping () -> Content) {
+        init(_ title: String, @ViewBuilder content: @escaping () -> Content) {
             self.title = title
             self.content = content
         }
@@ -143,6 +176,14 @@ struct PlayerEditView: View {
                 content()
             }
             .padding(.horizontal)
+        }
+    }
+    
+    private func checkRating(field: String, rating: Double) {
+        if rating <= 0 || rating > 10 {
+            errorMessage = "\(field) must be between 0.1 and 10"
+        } else {
+            errorMessage = nil
         }
     }
 }
