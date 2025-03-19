@@ -179,6 +179,7 @@ class Player: Identifiable, Equatable, Hashable {
         }
     }
     
+    //TODO: Figure out why fetches aren't returning an updated object
     func updatePlayer(_ properties: [PropertyUpdate], context: NSManagedObjectContext) {
         var updateProperties: [String: Any] = [:]
         for property in properties {
@@ -189,7 +190,8 @@ class Player: Identifiable, Equatable, Hashable {
         updateRequest.propertiesToUpdate = updateProperties
         updateRequest.resultType = .updatedObjectIDsResultType
         do {
-            let _ = try context.execute(updateRequest)
+            let result = try context.execute(updateRequest)
+            print("Persistence result: \(result.description)")
         } catch(let error) {
             print("Persistence update error: \(error.localizedDescription)")
         }

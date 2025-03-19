@@ -114,15 +114,15 @@ struct PlayerEditView: View {
                             .foregroundColor(.white)
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(viewModel.errorMessage != nil ? .blue : .gray)
+                            .background(viewModel.errorPresent ? .gray : .blue)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
-                    .disabled(viewModel.errorMessage != nil)
+                    .disabled(viewModel.errorPresent)
                 }
                 .padding()
-                .onTapGesture {
-                    focusedField = nil
-                }
+//                .onTapGesture {
+//                    focusedField = nil
+//                }
             }
         }
     }

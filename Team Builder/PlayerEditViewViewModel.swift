@@ -12,26 +12,22 @@ import CoreData
 class PlayerEditViewViewModel: ObservableObject {
     @Published var player: Player
     @Published var errorMessage: String?
+    @Published var errorPresent = false
     private let frozenPlayer: Player
     private var cancellables: Set<AnyCancellable> = []
     
     init(player: Player) {
         self.player = player
         self.frozenPlayer = player.valueCopy()
-        
-//        $player.sink { [weak self] newValue in
-//            guard let self else { return }
-//            if let field = self.ratingChange() {
-//                self.checkRating(field: field.0, rating: field.1)
-//            }
-//        }.store(in: &cancellables)
     }
     
     func checkRating(field: String, rating: Double) {
         if rating <= 0 || rating > 10 {
             errorMessage = "\(field) must be between 0.1 and 10"
+            errorPresent = true
         } else {
             errorMessage = nil
+            errorPresent = false
         }
     }
     
