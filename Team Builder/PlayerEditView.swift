@@ -33,11 +33,8 @@ struct PlayerEditView: View {
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) var viewContext
-    @Binding var player: Player
-    @State var overallRating: Double = 0.0
-    @State var errorMessage: String? = nil
+    @StateObject var viewModel: PlayerEditViewViewModel
     @FocusState private var focusedField: Field?
-    let frozenPlayer: Player
         
     var body: some View {
         ZStack {
@@ -45,13 +42,13 @@ struct PlayerEditView: View {
                 .ignoresSafeArea()
             Form {
                 VStack(spacing: 20) {
-                    Text("Edit \(player.name)")
+                    Text("Edit \(viewModel.player.name)")
                         .font(.largeTitle)
                     
                     // Name Section
                     Section(header: Text("Player Information")) {
                         SectionView("Name") {
-                            TextField("Player Name", text: $player.name)
+                            TextField("Player Name", text: $viewModel.player.name)
                                 .textFieldStyle(.roundedBorder)
                                 .autocorrectionDisabled(true)
                                 .focused($focusedField, equals: .name)
@@ -59,7 +56,7 @@ struct PlayerEditView: View {
                         
                         // Gender Match Picker
                         SectionView("Gender Match") {
-                            Picker("Gender Match", selection: $player.gender) {
+                            Picker("Gender Match", selection: $viewModel.player.gender) {
                                 Text("MMP").tag(GenderMatch.mmp)
                                 Text("WMP").tag(GenderMatch.wmp)
                             }
@@ -71,30 +68,22 @@ struct PlayerEditView: View {
                     // Rating Section
                     Section(header: Text("Ratings")) {
                         VStack {
-                            if let errorMessage {
+                            if let errorMessage = viewModel.errorMessage {
                                 Text(errorMessage)
                                     .font(.footnote)
                                     .foregroundStyle(.red)
                             }
                             SectionView("Overall Rating") {
-                                //TODO: Deal with onChange requiring the values to be state vars, not fields on a binding. Maybe use this with tracking changes to update both local and persistence?
-                                TextField("Overall Rating", value: $overallRating, format: .number)
-                                    .textFieldStyle(.roundedBorder)
-                                    .keyboardType(.decimalPad)
-                                    .focused($focusedField, equals: .overallRating)
-                                    .onChange(of: $overallRating.wrappedValue) { newValue in
-                                        print("\(newValue)")
-                                        checkRating(field: "Overall rating", rating: newValue)
-                                    }
+                                playerRatingField(rating: $viewModel.player.overallRating, focus: .overallRating)
                             }
                             SectionView("Throw Rating") {
-                                playerRatingField(rating: $player.throwRating, focus: .throwRating)
+                                playerRatingField(rating: $viewModel.player.throwRating, focus: .throwRating)
                             }
                             SectionView("Cut Rating") {
-                                playerRatingField(rating: $player.cutRating, focus: .cutRating)
+                                playerRatingField(rating: $viewModel.player.cutRating, focus: .cutRating)
                             }
                             SectionView("Defense Rating") {
-                                playerRatingField(rating: $player.defenseRating, focus: .defenseRating)
+                                playerRatingField(rating: $viewModel.player.defenseRating, focus: .defenseRating)
                             }
                         }
                     }
@@ -102,34 +91,33 @@ struct PlayerEditView: View {
                     // Wins Section
                     Section(header: Text("Record")) {
                         SectionView("Wins") {
-                            playerTextField(value: $player.wins, field: .wins)
+                            playerTextField(value: $viewModel.player.wins, field: .wins)
                         }
                         
                         // Losses Section
                         SectionView("Losses") {
-                            playerTextField(value: $player.losses, field: .losses)
+                            playerTextField(value: $viewModel.player.losses, field: .losses)
                         }
                         
                         // Ties Section
                         SectionView("Ties") {
-                            playerTextField(value: $player.ties, field: .ties)
+                            playerTextField(value: $viewModel.player.ties, field: .ties)
                         }
                     }
                     
                     // Save Button
                     Button(action: {
-                        let updated = player.compareTo(frozenPlayer)
-                        player.updatePlayer(updated, context: viewContext)
+                        viewModel.updatePlayer(context: viewContext)
                         dismiss()
                     }) {
                         Text("Save Player")
                             .foregroundColor(.white)
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(errorMessage != nil ? .blue : .gray)
+                            .background(viewModel.errorMessage != nil ? .blue : .gray)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
-                    .disabled(errorMessage != nil)
+                    .disabled(viewModel.errorMessage != nil)
                 }
                 .padding()
                 .onTapGesture {
@@ -154,8 +142,7 @@ struct PlayerEditView: View {
                 .keyboardType(.decimalPad)
                 .focused($focusedField, equals: focus)
                 .onChange(of: rating.wrappedValue) { newValue in
-                    print("\(newValue)")
-                    checkRating(field: focus.fieldTitle, rating: newValue)
+                    viewModel.checkRating(field: focus.fieldTitle, rating: newValue)
                 }
         }
     }
@@ -176,14 +163,6 @@ struct PlayerEditView: View {
                 content()
             }
             .padding(.horizontal)
-        }
-    }
-    
-    private func checkRating(field: String, rating: Double) {
-        if rating <= 0 || rating > 10 {
-            errorMessage = "\(field) must be between 0.1 and 10"
-        } else {
-            errorMessage = nil
         }
     }
 }
