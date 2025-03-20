@@ -27,7 +27,7 @@ enum PropertyUpdate: Equatable {
     case throwRating(Double)
     case cutRating(Double)
     case defenseRating(Double)
-    case gender(GenderMatch)
+    case gender(String)
     case wins(Int)
     case losses(Int)
     case ties(Int)
@@ -125,7 +125,7 @@ class Player: Identifiable, Equatable, Hashable {
             updatedProperties.append(.defenseRating(defenseRating))
         }
         if other.gender != gender {
-            updatedProperties.append(.gender(gender))
+            updatedProperties.append(.gender(gender.rawValue))
         }
         if other.wins != wins {
             updatedProperties.append(.wins(wins))
@@ -187,8 +187,9 @@ class Player: Identifiable, Equatable, Hashable {
         }
         let updateRequest = NSBatchUpdateRequest(entityName: "PersistedPlayer")
         updateRequest.predicate = NSPredicate(format: "idString == %@", idString)
+        print("Updating: \(idString)")
         updateRequest.propertiesToUpdate = updateProperties
-        updateRequest.resultType = .updatedObjectIDsResultType
+        updateRequest.resultType = .statusOnlyResultType
         do {
             let result = try context.execute(updateRequest)
             print("Persistence result: \(result.description)")

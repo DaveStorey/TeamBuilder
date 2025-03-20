@@ -172,14 +172,13 @@ private extension RosterView {
     private func getPlayers() {
         let fetchRequest: NSFetchRequest<PersistedPlayer> = PersistedPlayer.fetchRequest()
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: #keyPath(PersistedPlayer.name), ascending: true)]
-        
         do {
             let persistedPlayers = try viewContext.fetch(fetchRequest)
             persistedPlayers.forEach { persistedPlayer in
                 // Printing player info on load in console for easy stat checking/compiling
-                #if DEBUG
-                print("\(persistedPlayer.name ?? "No Name")(\(persistedPlayer.overallRating)): wins: \(persistedPlayer.wins)\n losses: \(persistedPlayer.losses)\n ties: \(persistedPlayer.ties)")
-                #endif
+//                #if DEBUG
+//                print("\(persistedPlayer.name ?? "No Name")(\(persistedPlayer.overallRating)): wins: \(persistedPlayer.wins)\n losses: \(persistedPlayer.losses)\n ties: \(persistedPlayer.ties)")
+//                #endif
                 if let match = GenderMatch(rawValue: persistedPlayer.gender ?? "MMP"),
                    !playerList.contains(where: { $0.name == persistedPlayer.name && $0.overallRating == persistedPlayer.overallRating }) {
                     playerList.append(Player(name: persistedPlayer.name ?? "",
