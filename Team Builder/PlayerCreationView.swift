@@ -152,15 +152,13 @@ extension PlayerCreationView {
                                    wins: wins,
                                    losses: losses,
                                    ties: ties)
-            newPlayer.savePlayer(context: viewContext)
-            if !playerList.contains(where: { $0.idString == newPlayer.idString }) {
-                playerList.append(newPlayer)
-            }
+        newPlayer.savePlayer(context: viewContext)
+        playerList.append(newPlayer)
     }
     
     private func checkRating(field: String, rating: Double) {
-        if rating <= 0 || rating > 10 {
-            errorMessage = "\(field) must be between 0.1 and 10"
+        if rating < 0 || rating > 10 {
+            errorMessage = "\(field) must be between 0.0 and 10.0"
         } else {
             errorMessage = nil
         }

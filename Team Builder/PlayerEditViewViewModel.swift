@@ -12,27 +12,37 @@ import CoreData
 class PlayerEditViewViewModel: ObservableObject {
     @Published var player: Player
     @Published var errorMessage: String?
-    @Published var errorPresent = false
+    @Published var nameError: String?
+    @Published var errorPresent: Bool = false
     private let frozenPlayer: Player
     private var cancellables: Set<AnyCancellable> = []
     
     init(player: Player) {
         self.player = player
         self.frozenPlayer = player.valueCopy()
-    }
-    
-    func checkRating(field: String, rating: Double) {
-        if rating <= 0 || rating > 10 {
-            errorMessage = "\(field) must be between 0.1 and 10"
-            errorPresent = true
-        } else {
-            errorMessage = nil
-            errorPresent = false
-        }
+        
+        $player.sink { [weak self] newPlayer in
+            guard let self else { return }
+            if newPlayer.name.isEmpty {
+                nameError = "Name is required"
+                errorPresent = true
+            } else if nameError != nil {
+                nameError = nil
+                errorPresent = false
+            }
+            if let (field, rating) = self.ratingChange(), !((0...10).contains(rating)) {
+                errorMessage = "\(field) must be between 0.0 and 10"
+                errorPresent = true
+            } else if errorMessage != nil {
+                errorMessage = nil
+                errorPresent = nameError != nil
+            }
+        }.store(in: &cancellables)
+        
     }
     
     private func ratingChange() -> (String, Double)? {
-        if  player.overallRating != frozenPlayer.overallRating {
+        if player.overallRating != frozenPlayer.overallRating {
             return ("Overall rating", player.overallRating)
         } else if player.throwRating != frozenPlayer.throwRating {
             return ("Throw rating", player.throwRating)

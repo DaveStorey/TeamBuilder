@@ -48,6 +48,11 @@ struct PlayerEditView: View {
                     // Name Section
                     Section(header: Text("Player Information")) {
                         SectionView("Name") {
+                            if let errorMessage = viewModel.nameError {
+                                Text(errorMessage)
+                                    .font(.footnote)
+                                    .foregroundStyle(.red)
+                            }
                             TextField("Player Name", text: $viewModel.player.name)
                                 .textFieldStyle(.roundedBorder)
                                 .autocorrectionDisabled(true)
@@ -120,9 +125,6 @@ struct PlayerEditView: View {
                     .disabled(viewModel.errorPresent)
                 }
                 .padding()
-//                .onTapGesture {
-//                    focusedField = nil
-//                }
             }
         }
     }
@@ -141,9 +143,6 @@ struct PlayerEditView: View {
                 .textFieldStyle(.roundedBorder)
                 .keyboardType(.decimalPad)
                 .focused($focusedField, equals: focus)
-                .onChange(of: rating.wrappedValue) { newValue in
-                    viewModel.checkRating(field: focus.fieldTitle, rating: newValue)
-                }
         }
     }
 
