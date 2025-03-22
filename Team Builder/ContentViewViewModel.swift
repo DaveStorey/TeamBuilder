@@ -53,7 +53,7 @@ class ContentViewViewModel: ObservableObject {
         var totalDiff = RatingsVariance()
         while ((bestThrowDiff > totalDiff.throwing || bestCutDiff > totalDiff.cutting || bestDefenseDiff > totalDiff.defense) &&
                totalDiff.overall > ratingVariance)
-                && generationCount < 1500 {
+                && generationCount < (useOverall ? 600 : 2000) {
             generateTeams()
 
             var (maxThrow, minThrow) = (0.0, 10.0)
