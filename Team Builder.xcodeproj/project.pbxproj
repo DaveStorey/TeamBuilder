@@ -11,6 +11,8 @@
 		150C902B2BD1D3CB003BE366 /* TeamOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150C902A2BD1D3CB003BE366 /* TeamOptionsView.swift */; };
 		150FDAC72D284C47001D2D17 /* TeamResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150FDAC62D284C47001D2D17 /* TeamResultView.swift */; };
 		150FDAC92D288A3B001D2D17 /* PlayerInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150FDAC82D288A3B001D2D17 /* PlayerInfoView.swift */; };
+		15ACFB342D8F437B00B25CC8 /* RosterInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15ACFB332D8F437400B25CC8 /* RosterInfoView.swift */; };
+		15ACFB362D8F43F100B25CC8 /* PlayerCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15ACFB352D8F43EC00B25CC8 /* PlayerCreationView.swift */; };
 		15AF8CDD2C8F5650000DB659 /* JsonDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AF8CDC2C8F5650000DB659 /* JsonDecoder.swift */; };
 		15D0A5462C7E2E7000563477 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D0A5452C7E2E7000563477 /* Extensions.swift */; };
 		15D0A5492C875E4900563477 /* PersistedRoster.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 15D0A5472C875E4900563477 /* PersistedRoster.xcdatamodeld */; };
@@ -25,7 +27,7 @@
 		15E4D78B2BB49FF200E51A50 /* Team_BuilderUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E4D78A2BB49FF200E51A50 /* Team_BuilderUITestsLaunchTests.swift */; };
 		15E4D7982BB4A1FD00E51A50 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E4D7972BB4A1FD00E51A50 /* Player.swift */; };
 		15E4D79A2BB4A2A500E51A50 /* ContentViewViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E4D7992BB4A2A500E51A50 /* ContentViewViewModel.swift */; };
-		15E4D79E2BB5E71000E51A50 /* PlayerCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E4D79D2BB5E71000E51A50 /* PlayerCreationView.swift */; };
+		15E4D79E2BB5E71000E51A50 /* RosterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E4D79D2BB5E71000E51A50 /* RosterView.swift */; };
 		15F496A32D2C2C2F00FA347D /* PlayerEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F496A22D2C2C2F00FA347D /* PlayerEditView.swift */; };
 /* End PBXBuildFile section */
 
@@ -51,6 +53,8 @@
 		150C902A2BD1D3CB003BE366 /* TeamOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamOptionsView.swift; sourceTree = "<group>"; };
 		150FDAC62D284C47001D2D17 /* TeamResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamResultView.swift; sourceTree = "<group>"; };
 		150FDAC82D288A3B001D2D17 /* PlayerInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerInfoView.swift; sourceTree = "<group>"; };
+		15ACFB332D8F437400B25CC8 /* RosterInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RosterInfoView.swift; sourceTree = "<group>"; };
+		15ACFB352D8F43EC00B25CC8 /* PlayerCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCreationView.swift; sourceTree = "<group>"; };
 		15AF8CDC2C8F5650000DB659 /* JsonDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JsonDecoder.swift; sourceTree = "<group>"; };
 		15D0A5452C7E2E7000563477 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		15D0A5482C875E4900563477 /* PersistedRoster.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = PersistedRoster.xcdatamodel; sourceTree = "<group>"; };
@@ -68,7 +72,7 @@
 		15E4D78A2BB49FF200E51A50 /* Team_BuilderUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Team_BuilderUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		15E4D7972BB4A1FD00E51A50 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		15E4D7992BB4A2A500E51A50 /* ContentViewViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewViewModel.swift; sourceTree = "<group>"; };
-		15E4D79D2BB5E71000E51A50 /* PlayerCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCreationView.swift; sourceTree = "<group>"; };
+		15E4D79D2BB5E71000E51A50 /* RosterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RosterView.swift; sourceTree = "<group>"; };
 		15F496A22D2C2C2F00FA347D /* PlayerEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerEditView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -138,7 +142,9 @@
 				15E4D76E2BB49FF200E51A50 /* Preview Content */,
 				15E4D7972BB4A1FD00E51A50 /* Player.swift */,
 				15E4D7992BB4A2A500E51A50 /* ContentViewViewModel.swift */,
-				15E4D79D2BB5E71000E51A50 /* PlayerCreationView.swift */,
+				15E4D79D2BB5E71000E51A50 /* RosterView.swift */,
+				15ACFB352D8F43EC00B25CC8 /* PlayerCreationView.swift */,
+				15ACFB332D8F437400B25CC8 /* RosterInfoView.swift */,
 				150C90282BD1CD9D003BE366 /* League.swift */,
 				150C902A2BD1D3CB003BE366 /* TeamOptionsView.swift */,
 				15D0A5452C7E2E7000563477 /* Extensions.swift */,
@@ -309,6 +315,7 @@
 				150FDAC72D284C47001D2D17 /* TeamResultView.swift in Sources */,
 				150C90292BD1CD9D003BE366 /* League.swift in Sources */,
 				15E4D7752BB49FF200E51A50 /* PersistedPlayer.xcdatamodeld in Sources */,
+				15ACFB342D8F437B00B25CC8 /* RosterInfoView.swift in Sources */,
 				150C902B2BD1D3CB003BE366 /* TeamOptionsView.swift in Sources */,
 				15D0A5462C7E2E7000563477 /* Extensions.swift in Sources */,
 				15E4D7982BB4A1FD00E51A50 /* Player.swift in Sources */,
@@ -316,9 +323,10 @@
 				15AF8CDD2C8F5650000DB659 /* JsonDecoder.swift in Sources */,
 				15D0A5492C875E4900563477 /* PersistedRoster.xcdatamodeld in Sources */,
 				150FDAC92D288A3B001D2D17 /* PlayerInfoView.swift in Sources */,
+				15ACFB362D8F43F100B25CC8 /* PlayerCreationView.swift in Sources */,
 				15E4D79A2BB4A2A500E51A50 /* ContentViewViewModel.swift in Sources */,
 				15F496A32D2C2C2F00FA347D /* PlayerEditView.swift in Sources */,
-				15E4D79E2BB5E71000E51A50 /* PlayerCreationView.swift in Sources */,
+				15E4D79E2BB5E71000E51A50 /* RosterView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

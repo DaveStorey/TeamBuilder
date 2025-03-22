@@ -23,7 +23,7 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink(
-                        destination: PlayerCreationView(playerList: $viewModel.playerList, selectedPlayers: $viewModel.selectedPlayers),
+                        destination: RosterView(playerList: $viewModel.playerList, selectedPlayers: $viewModel.selectedPlayers),
                         label: { Text("Add Players") }
                     )
                     .navigationBarTitleDisplayMode(.inline)
