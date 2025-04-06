@@ -26,7 +26,6 @@ struct TeamOptionsView: View {
                         .padding(.horizontal)
                         .textFieldStyle(.roundedBorder)
                         .keyboardType(.numberPad)
-                    
                     Toggle(isOn: $viewModel.useOverall, label: { Text("Use overall ratings") })
                         .padding(.horizontal)
                 }
@@ -67,6 +66,12 @@ struct TeamOptionsView: View {
                             .keyboardType(.decimalPad)
                     }
                 }
+                Text("Maximum Iterations")
+                    .padding(.leading)
+                TextField("Maximum Iterations", value: $viewModel.iterations, format: .number)
+                    .padding(.horizontal)
+                    .textFieldStyle(.roundedBorder)
+                    .keyboardType(.numberPad)
                 Button(action: {
                     self.dismiss.callAsFunction()
                 }, label: { Text("Save").foregroundStyle(.white) })

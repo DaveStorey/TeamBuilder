@@ -40,6 +40,7 @@ class ContentViewViewModel: ObservableObject {
     @Published var defenseVariance = 0.4
     @Published var useOverall = false
     @Published var teamDiffError = false
+    var iterations = 600
     var teamErrorString = "No teams found with the specified parameters. The best option found has a difference of -0.0"
     private var generationCount = 0
     
@@ -51,9 +52,9 @@ class ContentViewViewModel: ObservableObject {
         var bestCutDiff = Double.greatestFiniteMagnitude
         var bestDefenseDiff = Double.greatestFiniteMagnitude
         var totalDiff = RatingsVariance()
-        while ((bestThrowDiff > totalDiff.throwing || bestCutDiff > totalDiff.cutting || bestDefenseDiff > totalDiff.defense) &&
-               totalDiff.overall > ratingVariance)
-                && generationCount < (useOverall ? 600 : 2000) {
+        var needsNewGen = true
+        while needsNewGen
+                && generationCount < iterations {
             generateTeams()
 
             var (maxThrow, minThrow) = (0.0, 10.0)
@@ -90,6 +91,7 @@ class ContentViewViewModel: ObservableObject {
                 bestOptionTeams = (totalDiff, preliminaryTeams)
             }
             generationCount += 1
+            needsNewGen = useOverall ? totalDiff.overall > ratingVariance : (bestThrowDiff > totalDiff.throwing || bestCutDiff > totalDiff.cutting || bestDefenseDiff > totalDiff.defense)
         }
         let teamError: Bool
         if useOverall {
