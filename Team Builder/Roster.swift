@@ -1,5 +1,5 @@
 //
-//  League.swift
+//  Roster.swift
 //  Team Builder
 //
 //  Created by David Storey on 4/18/24.
@@ -49,6 +49,14 @@ class Roster: Identifiable, Equatable, Hashable {
         players.isEmpty ? 0 : players.map { $0.defenseRating }.reduce(0, +) / Double(players.count)
     }
     
+    var centroid: [Double] {
+        centroid(of: self)
+    }
+    
+    var euclideanDistanceFromCenter: Double {
+        euclideanDistance(to: [0,0,0])
+    }
+    
     func hasReachedGenderLimit(gender: GenderMatch, limit: Int) -> Bool {
         self.players.filter({ $0.gender == gender }).count >= limit
     }
@@ -61,7 +69,7 @@ class Roster: Identifiable, Equatable, Hashable {
 
 extension Roster {
     /// Compute the centroid of a list of 3‑component rating vectors.
-    private func centroid(of team: Roster) -> [Double] {
+    func centroid(of team: Roster) -> [Double] {
         let count = Double(team.players.count)
         var sum = [0.0, 0.0, 0.0]
         for player in team.players {
@@ -73,34 +81,12 @@ extension Roster {
     }
 
     /// Euclidean distance between two 3D points.
-    private func euclideanDistance(_ a: [Double], _ b: [Double]) -> Double {
+    func euclideanDistance(to a: [Double]) -> Double {
+        let b = self.centroid
         precondition(a.count == 3 && b.count == 3)
         let dx = a[0] - b[0]
         let dy = a[1] - b[1]
         let dz = a[2] - b[2]
         return sqrt(dx*dx + dy*dy + dz*dz)
-    }
-
-    /// Score how “balanced” a proposed split is.
-    func balanceScore(teams: [Roster], useOverall: Bool) -> Double {
-        var maxMin: (Double, Double) = (0.0, 10.0)
-        if useOverall {
-            for team in teams {
-                if team.averageRating > maxMin.0 {
-                    maxMin.0 = team.averageRating
-                } else if team.averageRating < maxMin.1 {
-                    maxMin.1 = team.averageRating
-                }
-            }
-        } else {
-            var teamCentroids: [[Double]] = []
-            for team in teams {
-                teamCentroids.append(centroid(of: team))
-            }
-            for centroid in teamCentroids {
-                maxMin.1 = euclideanDistance([10, 10, 10], centroid)
-            }
-        }
-        return maxMin.0 - maxMin.1
     }
 }

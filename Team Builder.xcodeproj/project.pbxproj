@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		150C90292BD1CD9D003BE366 /* League.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150C90282BD1CD9D003BE366 /* League.swift */; };
+		150C90292BD1CD9D003BE366 /* Roster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150C90282BD1CD9D003BE366 /* Roster.swift */; };
 		150C902B2BD1D3CB003BE366 /* TeamOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150C902A2BD1D3CB003BE366 /* TeamOptionsView.swift */; };
 		150FDAC72D284C47001D2D17 /* TeamResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150FDAC62D284C47001D2D17 /* TeamResultView.swift */; };
 		150FDAC92D288A3B001D2D17 /* PlayerInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150FDAC82D288A3B001D2D17 /* PlayerInfoView.swift */; };
@@ -48,7 +48,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		150C90282BD1CD9D003BE366 /* League.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = League.swift; sourceTree = "<group>"; };
+		150C90282BD1CD9D003BE366 /* Roster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Roster.swift; sourceTree = "<group>"; };
 		150C902A2BD1D3CB003BE366 /* TeamOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamOptionsView.swift; sourceTree = "<group>"; };
 		150FDAC62D284C47001D2D17 /* TeamResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamResultView.swift; sourceTree = "<group>"; };
 		150FDAC82D288A3B001D2D17 /* PlayerInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerInfoView.swift; sourceTree = "<group>"; };
@@ -140,7 +140,7 @@
 				15E4D7992BB4A2A500E51A50 /* ContentViewViewModel.swift */,
 				15E4D79D2BB5E71000E51A50 /* RosterView.swift */,
 				15D1D3362D81F13300110B33 /* RosterInfoView.swift */,
-				150C90282BD1CD9D003BE366 /* League.swift */,
+				150C90282BD1CD9D003BE366 /* Roster.swift */,
 				150C902A2BD1D3CB003BE366 /* TeamOptionsView.swift */,
 				15D0A5452C7E2E7000563477 /* Extensions.swift */,
 				150FDAC62D284C47001D2D17 /* TeamResultView.swift */,
@@ -312,7 +312,7 @@
 				15ACFB322D8B495900B25CC8 /* PlayerEditViewViewModel.swift in Sources */,
 				150FDAC72D284C47001D2D17 /* TeamResultView.swift in Sources */,
 				15335E0B2D6E627E002FB631 /* PlayerCreationView.swift in Sources */,
-				150C90292BD1CD9D003BE366 /* League.swift in Sources */,
+				150C90292BD1CD9D003BE366 /* Roster.swift in Sources */,
 				15D1D3372D81F13300110B33 /* RosterInfoView.swift in Sources */,
 				15E4D7752BB49FF200E51A50 /* PersistedPlayer.xcdatamodeld in Sources */,
 				150C902B2BD1D3CB003BE366 /* TeamOptionsView.swift in Sources */,

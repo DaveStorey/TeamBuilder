@@ -8,26 +8,11 @@
 import Foundation
 import CoreData
 
-struct RatingsVariance {
-    var overall = 10.0
-    var throwing = 10.0
-    var cutting = 10.0
-    var defense = 10.0
-    
-    func compareTo(_ bestOption: RatingsVariance, useOverall: Bool) -> Bool {
-        if useOverall {
-            return overall < bestOption.overall
-        } else {
-            return (throwing + cutting + defense) < (bestOption.throwing + bestOption.cutting + bestOption.defense)
-        }
-    }
-}
-
 class ContentViewViewModel: ObservableObject {
     @Published var playerList: [Player] = []
     @Published var selectedPlayers: [Player: Bool] = [:]
     @Published var teams: [Roster] = []
-    public private(set) var bestOptionTeams: (RatingsVariance, [Roster]) = (RatingsVariance(), [])
+    public private(set) var bestOptionTeams: (Double, [Roster]) = (10.0, [])
     private var preliminaryTeams: [Roster] = []
     private var maxRating = 0.0
     private var minRating = 10.0
@@ -47,62 +32,38 @@ class ContentViewViewModel: ObservableObject {
     private func createTeams() {
         generateTeams()
         guard !preliminaryTeams.isEmpty else { return }
-
-        var bestThrowDiff = Double.greatestFiniteMagnitude
-        var bestCutDiff = Double.greatestFiniteMagnitude
-        var bestDefenseDiff = Double.greatestFiniteMagnitude
-        var totalDiff = RatingsVariance()
+        var totalDiff: Double = 0.0
         var needsNewGen = true
         while needsNewGen
                 && generationCount < iterations {
             generateTeams()
 
-            var (maxThrow, minThrow) = (0.0, 10.0)
-            var (maxCut, minCut) = (0.0, 10.0)
-            var (maxDefense, minDefense) = (0.0, 10.0)
             var (maxRating, minRating) = (0.0, 10.0)
             if useOverall {
                 preliminaryTeams.forEach { team in
                     maxRating = max(maxRating, team.averageRating)
                     minRating = min(minRating, team.averageRating)
                 }
-                totalDiff.overall = maxRating - minRating
             } else {
                 preliminaryTeams.forEach { team in
-                    maxThrow = max(maxThrow, team.averageThrowRating)
-                    minThrow = min(minThrow, team.averageThrowRating)
-                    maxCut = max(maxCut, team.averageCutRating)
-                    minCut = min(minCut, team.averageCutRating)
-                    maxDefense = max(maxDefense, team.averageDefenseRating)
-                    minDefense = min(minDefense, team.averageDefenseRating)
+                    maxRating = max(maxRating, team.euclideanDistanceFromCenter)
+                    minRating = min(minRating, team.euclideanDistanceFromCenter)
                 }
-                
-                bestThrowDiff = maxThrow - minThrow
-                bestCutDiff = maxCut - minCut
-                bestDefenseDiff = maxDefense - minDefense
-                
-                totalDiff.throwing = bestThrowDiff
-                totalDiff.cutting = bestCutDiff
-                totalDiff.defense = bestDefenseDiff
             }
+            totalDiff = maxRating - minRating
             let currentBestDiff = bestOptionTeams.0
 
-            if totalDiff.compareTo(currentBestDiff, useOverall: useOverall) {
+            if totalDiff < currentBestDiff {
                 bestOptionTeams = (totalDiff, preliminaryTeams)
             }
             generationCount += 1
-            needsNewGen = useOverall ? totalDiff.overall > ratingVariance : (bestThrowDiff > totalDiff.throwing || bestCutDiff > totalDiff.cutting || bestDefenseDiff > totalDiff.defense)
+            needsNewGen = totalDiff > ratingVariance
         }
-        let teamError: Bool
-        if useOverall {
-            teamError = bestOptionTeams.0.overall > ratingVariance
-            teamErrorString = "No teams found with the specified parameters. The best option found has a difference of \(String(format:"%g", bestOptionTeams.0.overall))"
-        } else {
-            teamError = bestThrowDiff > throwVariance || bestCutDiff > cutVariance || bestDefenseDiff > defenseVariance
-            teamErrorString = "No teams found with the specified parameters. The best option found has a difference of throwing: \(String(format:"%g", bestOptionTeams.0.throwing)) \n cutting: \(String(format:"%g", bestOptionTeams.0.cutting)) \n defense: \(String(format:"%g", bestOptionTeams.0.throwing))"
-        }
-        if teamError {
-            teamDiffError = true
+        teamDiffError = needsNewGen
+        if useOverall, teamDiffError {
+            teamErrorString = "No teams found with the specified parameters. The best option found has a difference of \(String(format:"%g", bestOptionTeams.0))"
+        } else if teamDiffError {
+            teamErrorString = "No teams found with the specified parameters. The best option found has a difference of: \(String(format:"%g", bestOptionTeams.0))"
         } else {
             teams = bestOptionTeams.1
             preliminaryTeams.removeAll()
@@ -174,7 +135,7 @@ class ContentViewViewModel: ObservableObject {
         generationCount = 0
         maxRating = 0.0
         minRating = 10.0
-        bestOptionTeams = (RatingsVariance(), [])
+        bestOptionTeams = (10.0, [])
     }
     
     func addPlayerViewAppear() {
@@ -185,6 +146,23 @@ class ContentViewViewModel: ObservableObject {
         teams = []
         preliminaryTeams = []
         createTeams()
+    }
+
+    func ratingLimit() -> Double {
+        if useOverall {
+            return ratingVariance
+        }
+        return calculateRatingVariance()
+    }
+    
+    private func calculateRatingVariance() -> Double {
+        let b = [throwVariance, cutVariance, defenseVariance]
+        let a = [0.0, 0.0, 0.0]
+        precondition(a.count == 3 && b.count == 3)
+        let dx = a[0] - b[0]
+        let dy = a[1] - b[1]
+        let dz = a[2] - b[2]
+        return sqrt(dx*dx + dy*dy + dz*dz)
     }
     
     func teamResult(_ result: String, team: String, context: NSManagedObjectContext) {
