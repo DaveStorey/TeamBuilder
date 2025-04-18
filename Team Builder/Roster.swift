@@ -49,10 +49,6 @@ class Roster: Identifiable, Equatable, Hashable {
         players.isEmpty ? 0 : players.map { $0.defenseRating }.reduce(0, +) / Double(players.count)
     }
     
-    var centroid: [Double] {
-        centroid(of: self)
-    }
-    
     var euclideanDistanceFromCenter: Double {
         euclideanDistance(to: [0,0,0])
     }
@@ -82,7 +78,7 @@ extension Roster {
 
     /// Euclidean distance between two 3D points.
     func euclideanDistance(to a: [Double]) -> Double {
-        let b = self.centroid
+        let b = centroid(of: self)
         precondition(a.count == 3 && b.count == 3)
         let dx = a[0] - b[0]
         let dy = a[1] - b[1]

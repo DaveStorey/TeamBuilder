@@ -34,11 +34,12 @@ class ContentViewViewModel: ObservableObject {
         guard !preliminaryTeams.isEmpty else { return }
         var totalDiff: Double = 0.0
         var needsNewGen = true
+        let appliedRatingVarianceAllowed = calculateRatingVariance()
         while needsNewGen
                 && generationCount < iterations {
             generateTeams()
 
-            var (maxRating, minRating) = (0.0, 10.0)
+            var (maxRating, minRating) = (0.0, 100.0)
             if useOverall {
                 preliminaryTeams.forEach { team in
                     maxRating = max(maxRating, team.averageRating)
@@ -57,13 +58,14 @@ class ContentViewViewModel: ObservableObject {
                 bestOptionTeams = (totalDiff, preliminaryTeams)
             }
             generationCount += 1
-            needsNewGen = totalDiff > ratingVariance
+            needsNewGen = totalDiff > appliedRatingVarianceAllowed
         }
         teamDiffError = needsNewGen
         if useOverall, teamDiffError {
             teamErrorString = "No teams found with the specified parameters. The best option found has a difference of \(String(format:"%g", bestOptionTeams.0))"
         } else if teamDiffError {
-            teamErrorString = "No teams found with the specified parameters. The best option found has a difference of: \(String(format:"%g", bestOptionTeams.0))"
+            teamErrorString = "No teams found with the specified parameters. The best option found has a Euclidean difference of: \(String(format:"%g", bestOptionTeams.0))"
+            
         } else {
             teams = bestOptionTeams.1
             preliminaryTeams.removeAll()
