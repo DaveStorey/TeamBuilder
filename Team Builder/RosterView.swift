@@ -175,12 +175,8 @@ private extension RosterView {
         do {
             let persistedPlayers = try viewContext.fetch(fetchRequest)
             persistedPlayers.forEach { persistedPlayer in
-                // Printing player info on load in console for easy stat checking/compiling
-//                #if DEBUG
-//                print("\(persistedPlayer.name ?? "No Name")(\(persistedPlayer.overallRating)): wins: \(persistedPlayer.wins)\n losses: \(persistedPlayer.losses)\n ties: \(persistedPlayer.ties)")
-//                #endif
                 if let match = GenderMatch(rawValue: persistedPlayer.gender ?? "MMP"),
-                   !playerList.contains(where: { $0.name == persistedPlayer.name && $0.overallRating == persistedPlayer.overallRating }) {
+                   !playerList.contains(where: { $0.idString == persistedPlayer.idString }) {
                     playerList.append(Player(name: persistedPlayer.name ?? "",
                                             overallRating: persistedPlayer.overallRating,
                                             throwRating: persistedPlayer.throwRating,

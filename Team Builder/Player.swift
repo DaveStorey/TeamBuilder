@@ -101,6 +101,7 @@ class Player: Identifiable, Equatable, Hashable {
                throwRating: throwRating,
                cutRating: cutRating,
                defenseRating: defenseRating,
+               match: gender,
                wins: wins,
                losses: losses,
                ties: ties,
@@ -179,7 +180,6 @@ class Player: Identifiable, Equatable, Hashable {
         }
     }
     
-    //TODO: Figure out why fetches aren't returning an updated object
     func updatePlayer(_ properties: [PropertyUpdate], context: NSManagedObjectContext) {
         var updateProperties: [String: Any] = [:]
         for property in properties {
@@ -187,7 +187,6 @@ class Player: Identifiable, Equatable, Hashable {
         }
         let updateRequest = NSBatchUpdateRequest(entityName: "PersistedPlayer")
         updateRequest.predicate = NSPredicate(format: "idString == %@", idString)
-        print("Updating: \(idString)")
         updateRequest.propertiesToUpdate = updateProperties
         updateRequest.resultType = .statusOnlyResultType
         do {
