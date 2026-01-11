@@ -34,7 +34,7 @@ class ContentViewViewModel: ObservableObject {
         guard !preliminaryTeams.isEmpty else { return }
         var totalDiff: Double = 0.0
         var needsNewGen = true
-        let appliedRatingVarianceAllowed = calculateRatingVariance()
+        let appliedRatingVarianceAllowed = ratingLimit()
         while needsNewGen
                 && generationCount < iterations {
             generateTeams()
