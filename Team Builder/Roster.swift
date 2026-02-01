@@ -7,18 +7,24 @@
 
 import Foundation
 import Accelerate
+import CoreData
 
 class Roster: Identifiable, Equatable, Hashable {
     
     var name: String
     var players: [Player]
     var createDate: Date
-    var id: UUID = UUID()
+    var id: UUID
     
-    init(name: String, players: [Player]? = nil) {
+    init(name: String, players: [Player]? = nil, uuid: String? = nil) {
         self.name = name
         self.players = players ?? []
         self.createDate = Date()
+        if let id = uuid {
+            self.id = UUID(uuidString: id) ?? UUID()
+        } else {
+            self.id = UUID()
+        }
     }
     
     static func == (lhs: Roster, rhs: Roster) -> Bool {
@@ -86,3 +92,33 @@ extension Roster {
         return sqrt(dx*dx + dy*dy + dz*dz)
     }
 }
+
+//@objc(PersistedRoster)
+//public class PersistedRoster: NSManagedObject { }
+//
+//extension PersistedRoster {
+//    @nonobjc public class func fetchRequest() -> NSFetchRequest<PersistedRoster> {
+//        NSFetchRequest<PersistedRoster>(entityName: "PersistedRoster")
+//    }
+//
+//    @NSManaged public var id: UUID?
+//    @NSManaged public var name: String?
+//    @NSManaged public var createDate: Date?
+//    @NSManaged public var players: NSSet?
+//}
+//
+//extension PersistedRoster {
+//    var playerSet: Set<PersistedPlayer> {
+//        (players as? Set<PersistedPlayer>) ?? []
+//    }
+//
+//    func addPlayers(_ players: Set<PersistedPlayer>) {
+//        let mutable = self.mutableSetValue(forKey: #keyPath(PersistedRoster.players))
+//        players.forEach { mutable.add($0) }
+//    }
+//
+//    func removePlayers(_ players: Set<PersistedPlayer>) {
+//        let mutable = self.mutableSetValue(forKey: #keyPath(PersistedRoster.players))
+//        players.forEach { mutable.remove($0) }
+//    }
+//}

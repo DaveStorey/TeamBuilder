@@ -197,3 +197,28 @@ class Player: Identifiable, Equatable, Hashable {
         }
     }
 }
+
+extension PersistedPlayer {
+    func toModelPlayer() -> Player {
+        Player(name: name ?? "",
+               overallRating: overallRating,
+               throwRating: throwRating,
+               cutRating: cutRating,
+               defenseRating: defenseRating,
+               wins: Int(wins),
+               losses: Int(losses),
+               ties: Int(ties),
+               idString: idString ?? "")
+    }
+}
+
+extension PersistedRoster {
+    func toModelRoster() -> Roster {
+        var roster: Roster = Roster(name: name ?? "Untitled \(Date().ISO8601Format())", players: [], uuid: id)
+        roster.createDate = createDate ?? Date()
+        if let playerSet = players as? Set<PersistedPlayer> {
+            roster.players = playerSet.map { $0.toModelPlayer() }
+        }
+        return roster
+    }
+}

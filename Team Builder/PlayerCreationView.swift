@@ -144,14 +144,14 @@ extension PlayerCreationView {
     
     private func savePlayer() {
         let newPlayer = Player(name: name,
-                                   overallRating: overallRating,
-                                   throwRating: throwRating,
-                                   cutRating: cutRating,
-                                   defenseRating: defenseRating,
-                                   match: gender,
-                                   wins: wins,
-                                   losses: losses,
-                                   ties: ties)
+                               overallRating: overallRating,
+                               throwRating: throwRating,
+                               cutRating: cutRating,
+                               defenseRating: defenseRating,
+                               match: gender,
+                               wins: wins,
+                               losses: losses,
+                               ties: ties)
         newPlayer.savePlayer(context: viewContext)
         playerList.append(newPlayer)
     }
