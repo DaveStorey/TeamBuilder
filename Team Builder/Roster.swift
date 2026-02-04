@@ -36,6 +36,7 @@ class Roster: Identifiable, Equatable, Hashable {
     }
     
     var averageRating: Double {
+        guard players.count > 0 else { return 0 }
         var avg = 0.0
         for player in players {
             avg += player.overallRating
@@ -93,32 +94,34 @@ extension Roster {
     }
 }
 
-//@objc(PersistedRoster)
-//public class PersistedRoster: NSManagedObject { }
-//
-//extension PersistedRoster {
-//    @nonobjc public class func fetchRequest() -> NSFetchRequest<PersistedRoster> {
-//        NSFetchRequest<PersistedRoster>(entityName: "PersistedRoster")
-//    }
-//
-//    @NSManaged public var id: UUID?
-//    @NSManaged public var name: String?
-//    @NSManaged public var createDate: Date?
-//    @NSManaged public var players: NSSet?
-//}
-//
-//extension PersistedRoster {
-//    var playerSet: Set<PersistedPlayer> {
-//        (players as? Set<PersistedPlayer>) ?? []
-//    }
-//
-//    func addPlayers(_ players: Set<PersistedPlayer>) {
-//        let mutable = self.mutableSetValue(forKey: #keyPath(PersistedRoster.players))
-//        players.forEach { mutable.add($0) }
-//    }
-//
-//    func removePlayers(_ players: Set<PersistedPlayer>) {
-//        let mutable = self.mutableSetValue(forKey: #keyPath(PersistedRoster.players))
-//        players.forEach { mutable.remove($0) }
-//    }
-//}
+extension Roster {
+    func upsert(in context: NSManagedObjectContext) throws -> PersistedRoster {
+        let request: NSFetchRequest<PersistedRoster> = PersistedRoster.fetchRequest()
+        request.fetchLimit = 1
+        request.predicate = NSPredicate(format: "id == %@", self.id as CVarArg)
+
+        let persisted = try context.fetch(request).first ?? PersistedRoster(context: context)
+        persisted.name = self.name
+        persisted.createDate = self.createDate
+
+        // Map roster.players -> PersistedPlayer objects.
+        // Best practice: upsert players too, keyed by idString (or UUID).
+        let persistedPlayers = try self.players.map { player in
+            try player.upsert(in: context)
+        }
+
+        persisted.players = NSSet(array: persistedPlayers)
+        return persisted
+    }
+}
+
+extension PersistedRoster {
+    func toModelRoster() -> Roster {
+        let roster: Roster = Roster(name: name ?? "Untitled \(Date().ISO8601Format())", players: [], uuid: id)
+        roster.createDate = createDate ?? Date()
+        if let playerSet = players as? Set<PersistedPlayer> {
+            roster.players = playerSet.map { $0.toModelPlayer() }
+        }
+        return roster
+    }
+}

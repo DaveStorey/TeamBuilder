@@ -196,29 +196,39 @@ class Player: Identifiable, Equatable, Hashable {
             print("Persistence update error: \(error.localizedDescription)")
         }
     }
+    
+    func upsert(in context: NSManagedObjectContext) throws -> PersistedPlayer {
+        let request: NSFetchRequest<PersistedPlayer> = PersistedPlayer.fetchRequest()
+        request.fetchLimit = 1
+        request.predicate = NSPredicate(format: "idString == %@", self.idString)
+        let persisted = try context.fetch(request).first ?? PersistedPlayer(context: context)
+        persisted.name = self.name
+        persisted.createDate = Date()
+        persisted.gender = self.gender.rawValue
+        persisted.overallRating = self.overallRating
+        persisted.wins = Int16(self.wins)
+        persisted.losses = Int16(self.losses)
+        persisted.ties = Int16(self.ties)
+        persisted.throwRating = self.throwRating
+        persisted.cutRating = self.cutRating
+        persisted.defenseRating = self.defenseRating
+        persisted.idString = self.idString
+        return persisted
+        }
 }
 
 extension PersistedPlayer {
     func toModelPlayer() -> Player {
-        Player(name: name ?? "",
-               overallRating: overallRating,
-               throwRating: throwRating,
-               cutRating: cutRating,
-               defenseRating: defenseRating,
-               wins: Int(wins),
-               losses: Int(losses),
-               ties: Int(ties),
-               idString: idString ?? "")
-    }
-}
-
-extension PersistedRoster {
-    func toModelRoster() -> Roster {
-        var roster: Roster = Roster(name: name ?? "Untitled \(Date().ISO8601Format())", players: [], uuid: id)
-        roster.createDate = createDate ?? Date()
-        if let playerSet = players as? Set<PersistedPlayer> {
-            roster.players = playerSet.map { $0.toModelPlayer() }
-        }
-        return roster
+        let match = GenderMatch(rawValue: gender ?? GenderMatch.mmp.rawValue) ?? .mmp
+        return Player(name: name ?? "",
+                      overallRating: overallRating,
+                      throwRating: throwRating,
+                      cutRating: cutRating,
+                      defenseRating: defenseRating,
+                      match: match,
+                      wins: Int(wins),
+                      losses: Int(losses),
+                      ties: Int(ties),
+                      idString: idString ?? "")
     }
 }

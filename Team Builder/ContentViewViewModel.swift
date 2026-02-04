@@ -199,4 +199,16 @@ class ContentViewViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Persistence for Teams
+    func saveCurrentTeams() {
+        CoreDataStack.shared.replaceSavedTeams(with: teams)
+    }
+
+    func loadSavedTeams() {
+        let saved = CoreDataStack.shared.fetchRosters()
+        if !saved.isEmpty {
+            self.teams = saved
+        }
+    }
+    
 }

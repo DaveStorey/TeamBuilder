@@ -40,6 +40,13 @@ struct ContentView: View {
                         })
                     }
                 }
+                if !viewModel.teams.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Save Teams") {
+                            viewModel.saveCurrentTeams()
+                        }
+                    }
+                }
             }
         }
         .alert(isPresented: $viewModel.teamDiffError) {
@@ -56,6 +63,9 @@ struct ContentView: View {
         .popover(isPresented: $popupRosterOptions) {
             TeamOptionsView(viewModel: viewModel)
                 .presentationDetents([.height(viewModel.useOverall ? 300 : 500)])
+        }
+        .onAppear {
+            viewModel.loadSavedTeams()
         }
     }
 }
