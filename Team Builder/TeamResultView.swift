@@ -8,31 +8,52 @@
 import SwiftUI
 
 struct TeamResultView: View {
-    
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) var viewContext
     var viewModel: ContentViewViewModel
-    @State var winLoss: String = "Win"
+    @State private var teamScore: Int = 0
+    @State private var opponentScore: Int = 0
     let team: String
-    
+
     var body: some View {
         ZStack {
             Color.secondary
                 .opacity(0.2)
                 .ignoresSafeArea()
-            VStack {
+            VStack(spacing: 20) {
                 Text("Team Result")
                     .font(.largeTitle)
                     .padding()
                 Text(team)
                     .font(.title)
-                Picker(selection: $winLoss, label: Text("Win/Loss")) {
-                    Text("Win").tag("Win")
-                    Text("Loss").tag("Loss")
-                    Text("Tie").tag("Tie")
+
+                HStack(spacing: 40) {
+                    VStack {
+                        Text(team)
+                            .font(.headline)
+                        Stepper("\(teamScore)", value: $teamScore, in: 0...99)
+                            .labelsHidden()
+                        Text("\(teamScore)")
+                            .font(.system(size: 44, weight: .bold))
+                    }
+
+                    Text("vs")
+                        .font(.title2)
+
+                    VStack {
+                        Text("Opponent")
+                            .font(.headline)
+                        Stepper("\(opponentScore)", value: $opponentScore, in: 0...99)
+                            .labelsHidden()
+                        Text("\(opponentScore)")
+                            .font(.system(size: 44, weight: .bold))
+                    }
                 }
+                .padding()
+
                 Button(action: {
-                    viewModel.teamResult(winLoss, team: team, context: viewContext)
+                    viewModel.teamResult(teamScore: teamScore, opponentScore: opponentScore, team: team, context: viewContext)
                     self.dismiss.callAsFunction()
                 }, label: { Text(verbatim: "Save").foregroundStyle(.white) })
                 .padding()

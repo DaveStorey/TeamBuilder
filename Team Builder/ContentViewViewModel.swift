@@ -72,7 +72,6 @@ class ContentViewViewModel: ObservableObject {
             reset()
         }
     }
-
     
     private func generateTeams() {
         preliminaryTeams = (1...numberOfTeams).map { Roster(name: "Team \($0)") }
@@ -167,35 +166,21 @@ class ContentViewViewModel: ObservableObject {
         return sqrt(dx*dx + dy*dy + dz*dz)
     }
     
-    func teamResult(_ result: String, team: String, context: NSManagedObjectContext) {
-        let roster = teams.first { $0.name == team }!
-        if result == "Win" {
-            teamWin(roster, context: context)
-        } else if result == "Loss" {
-            teamLoss(roster, context: context)
-        } else if result == "Tie" {
-            teamTie(roster, context: context)
-        }
-    }
-    
-    func teamWin(_ roster: Roster, context: NSManagedObjectContext) {
+    func teamResult(teamScore: Int, opponentScore: Int, team: String, context: NSManagedObjectContext) {
+        guard let roster = teams.first(where: { $0.name == team }) else { return }
+        let diff = teamScore - opponentScore
         for player in roster.players {
-            player.wins += 1
-            player.updatePlayer([.wins(player.wins)], context: context)
-        }
-    }
-    
-    func teamLoss(_ roster: Roster, context: NSManagedObjectContext) {
-        for player in roster.players {
-            player.losses += 1
-            player.updatePlayer([.losses(player.losses)], context: context)
-        }
-    }
-    
-    func teamTie(_ roster: Roster, context: NSManagedObjectContext) {
-        for player in roster.players {
-            player.ties += 1
-            player.updatePlayer([.ties(player.ties)], context: context)
+            player.pointDifferential += diff
+            if diff > 0 {
+                player.wins += 1
+                player.updatePlayer([.wins(player.wins), .pointDifferential(player.pointDifferential)], context: context)
+            } else if diff < 0 {
+                player.losses += 1
+                player.updatePlayer([.losses(player.losses), .pointDifferential(player.pointDifferential)], context: context)
+            } else {
+                player.ties += 1
+                player.updatePlayer([.ties(player.ties), .pointDifferential(player.pointDifferential)], context: context)
+            }
         }
     }
     

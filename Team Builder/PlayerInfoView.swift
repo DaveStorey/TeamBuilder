@@ -32,6 +32,7 @@ struct PlayerInfoView: View {
                     PlayerStatView(label: "Losses", value: "\(player.losses)")
                     PlayerStatView(label: "Ties", value: "\(player.ties)")
                     PlayerStatView(label: "Winning Percentage", value: String(format: "%g", player.winningPercentage))
+                    PlayerStatView(label: "Point Differential", value: (player.pointDifferential >= 0 ? "+" : "") + "\(player.pointDifferential)")
                     
                     Spacer()
                         .frame(height: 50)

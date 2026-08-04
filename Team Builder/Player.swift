@@ -31,7 +31,8 @@ enum PropertyUpdate: Equatable {
     case wins(Int)
     case losses(Int)
     case ties(Int)
-    
+    case pointDifferential(Int)
+
     var updateValue: (String, Any) {
         switch self {
         case .name(let value): ("name", value)
@@ -43,6 +44,7 @@ enum PropertyUpdate: Equatable {
         case .wins(let value): ("wins", value)
         case .losses(let value): ("losses", value)
         case .ties(let value): ("ties", value)
+        case .pointDifferential(let value): ("pointDifferential", value)
         }
     }
 
@@ -59,8 +61,9 @@ class Player: Identifiable, Equatable, Hashable {
     var wins: Int
     var losses: Int
     var ties: Int
+    var pointDifferential: Int
     let idString: String
-    
+
     init(name: String,
          overallRating: Double,
          throwRating: Double = 0.0,
@@ -70,6 +73,7 @@ class Player: Identifiable, Equatable, Hashable {
          wins: Int = 0,
          losses: Int = 0,
          ties: Int = 0,
+         pointDifferential: Int = 0,
          idString: String = UUID().uuidString) {
         self.name = name
         self.overallRating = overallRating
@@ -80,6 +84,7 @@ class Player: Identifiable, Equatable, Hashable {
         self.wins = wins
         self.losses = losses
         self.ties = ties
+        self.pointDifferential = pointDifferential
         self.idString = idString
     }
     
@@ -105,6 +110,7 @@ class Player: Identifiable, Equatable, Hashable {
                wins: wins,
                losses: losses,
                ties: ties,
+               pointDifferential: pointDifferential,
                idString: idString)
     }
     
@@ -137,6 +143,9 @@ class Player: Identifiable, Equatable, Hashable {
         if other.ties != ties {
             updatedProperties.append(.ties(ties))
         }
+        if other.pointDifferential != pointDifferential {
+            updatedProperties.append(.pointDifferential(pointDifferential))
+        }
         return updatedProperties
     }
     
@@ -168,6 +177,7 @@ class Player: Identifiable, Equatable, Hashable {
         savedPlayer.wins = Int16(wins)
         savedPlayer.losses = Int16(losses)
         savedPlayer.ties = Int16(ties)
+        savedPlayer.pointDifferential = Int32(pointDifferential)
         savedPlayer.throwRating = throwRating
         savedPlayer.cutRating = cutRating
         savedPlayer.defenseRating = defenseRating
@@ -209,6 +219,7 @@ class Player: Identifiable, Equatable, Hashable {
         persisted.wins = Int16(self.wins)
         persisted.losses = Int16(self.losses)
         persisted.ties = Int16(self.ties)
+        persisted.pointDifferential = Int32(self.pointDifferential)
         persisted.throwRating = self.throwRating
         persisted.cutRating = self.cutRating
         persisted.defenseRating = self.defenseRating
@@ -229,6 +240,7 @@ extension PersistedPlayer {
                       wins: Int(wins),
                       losses: Int(losses),
                       ties: Int(ties),
+                      pointDifferential: Int(pointDifferential),
                       idString: idString ?? "")
     }
 }

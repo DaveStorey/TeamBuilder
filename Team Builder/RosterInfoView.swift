@@ -13,13 +13,15 @@ struct RosterInfoView: View {
             case wins = "Wins"
             case losses = "Losses"
             case name = "Name"
+            case pointDiff = "Point Diff"
             
             var next: SortedBy {
                 switch self {
                 case .percent: return .wins
                 case .wins: return .losses
                 case .losses: return .name
-                case .name: return .percent
+                case .name: return .pointDiff
+                case .pointDiff: return .percent
                 }
             }
         }
@@ -43,6 +45,8 @@ struct RosterInfoView: View {
                     return $0.losses > $1.losses
                 case .name:
                     return $0.name < $1.name
+                case .pointDiff:
+                    return $0.pointDifferential < $1.pointDifferential
                 }
             })) { player in
                 Section(header: HStack {
@@ -50,21 +54,25 @@ struct RosterInfoView: View {
                     Text(player.name).font(.headline)
                     Spacer()
                 }) {
-                    HStack {
-                        VStack {
-                            Text("Wins")
-                            Text("\(player.wins)")
+                    VStack {
+                        HStack {
+                            VStack {
+                                Text("Wins")
+                                Text("\(player.wins)")
+                            }
+                            Spacer()
+                            VStack {
+                                Text("Losses")
+                                Text("\(player.losses)")
+                            }
+                            Spacer()
+                            VStack {
+                                Text("Ties")
+                                Text("\(player.ties)")
+                            }
                         }
-                        Spacer()
-                        VStack {
-                            Text("Losses")
-                            Text("\(player.losses)")
-                        }
-                        Spacer()
-                        VStack {
-                            Text("Ties")
-                            Text("\(player.ties)")
-                        }
+                        Text("Point Diff")
+                        Text("\(player.pointDifferential)")
                     }
                 }
             }
