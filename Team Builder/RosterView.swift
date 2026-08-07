@@ -186,6 +186,7 @@ private extension RosterView {
                                             wins: Int(persistedPlayer.wins),
                                             losses: Int(persistedPlayer.losses),
                                             ties: Int(persistedPlayer.ties),
+                                            pointDifferential: Int(persistedPlayer.pointDifferential),
                                             idString: persistedPlayer.idString ?? UUID().uuidString))
                 }
             }

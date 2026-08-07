@@ -166,9 +166,25 @@ class ContentViewViewModel: ObservableObject {
         return sqrt(dx*dx + dy*dy + dz*dz)
     }
     
-    func teamResult(teamScore: Int, opponentScore: Int, team: String, context: NSManagedObjectContext) {
-        guard let roster = teams.first(where: { $0.name == team }) else { return }
-        let diff = teamScore - opponentScore
+    func gameResult(team: String, teamScore: Int, opponent: String, opponentScore: Int, context: NSManagedObjectContext) {
+        guard let roster = teams.first(where: { $0.name == team }),
+              let opponentRoster = teams.first(where: { $0.name == opponent }) else { return }
+
+        let ratingDiff = roster.averageRating - opponentRoster.averageRating
+        if abs(ratingDiff) >= 0.05 {
+            let ratio = Double(teamScore - opponentScore) / ratingDiff
+            let newSum = UserDefaults.standard.double(forKey: "goalValueSum") + ratio
+            let newCount = UserDefaults.standard.integer(forKey: "goalValueCount") + 1
+            UserDefaults.standard.set(newSum, forKey: "goalValueSum")
+            UserDefaults.standard.set(newCount, forKey: "goalValueCount")
+        }
+
+        applyResult(to: roster, score: teamScore, opponentScore: opponentScore, context: context)
+        applyResult(to: opponentRoster, score: opponentScore, opponentScore: teamScore, context: context)
+    }
+
+    private func applyResult(to roster: Roster, score: Int, opponentScore: Int, context: NSManagedObjectContext) {
+        let diff = score - opponentScore
         for player in roster.players {
             player.pointDifferential += diff
             if diff > 0 {
