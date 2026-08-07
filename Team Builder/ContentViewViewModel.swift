@@ -170,17 +170,44 @@ class ContentViewViewModel: ObservableObject {
         guard let roster = teams.first(where: { $0.name == team }),
               let opponentRoster = teams.first(where: { $0.name == opponent }) else { return }
 
-        let ratingDiff = roster.averageRating - opponentRoster.averageRating
-        if abs(ratingDiff) >= 0.05 {
-            let ratio = Double(teamScore - opponentScore) / ratingDiff
-            let newSum = UserDefaults.standard.double(forKey: "goalValueSum") + ratio
-            let newCount = UserDefaults.standard.integer(forKey: "goalValueCount") + 1
-            UserDefaults.standard.set(newSum, forKey: "goalValueSum")
-            UserDefaults.standard.set(newCount, forKey: "goalValueCount")
-        }
+        let pointDiff = Double(teamScore - opponentScore)
+        let allPlayers = roster.players + opponentRoster.players
+
+        recordOLSObservation(
+            pointDiff: pointDiff,
+            ratingDiff: roster.averageRating - opponentRoster.averageRating,
+            qualifies: true,
+            crossKey: "goalCrossProduct", squaredKey: "goalSumSquaredDiffs", countKey: "goalCount"
+        )
+        recordOLSObservation(
+            pointDiff: pointDiff,
+            ratingDiff: roster.averageThrowRating - opponentRoster.averageThrowRating,
+            qualifies: allPlayers.allSatisfy { $0.throwRating > 0 },
+            crossKey: "throwCrossProduct", squaredKey: "throwSumSquaredDiffs", countKey: "throwCount"
+        )
+        recordOLSObservation(
+            pointDiff: pointDiff,
+            ratingDiff: roster.averageCutRating - opponentRoster.averageCutRating,
+            qualifies: allPlayers.allSatisfy { $0.cutRating > 0 },
+            crossKey: "cutCrossProduct", squaredKey: "cutSumSquaredDiffs", countKey: "cutCount"
+        )
+        recordOLSObservation(
+            pointDiff: pointDiff,
+            ratingDiff: roster.averageDefenseRating - opponentRoster.averageDefenseRating,
+            qualifies: allPlayers.allSatisfy { $0.defenseRating > 0 },
+            crossKey: "defenseCrossProduct", squaredKey: "defenseSumSquaredDiffs", countKey: "defenseCount"
+        )
 
         applyResult(to: roster, score: teamScore, opponentScore: opponentScore, context: context)
         applyResult(to: opponentRoster, score: opponentScore, opponentScore: teamScore, context: context)
+    }
+
+    private func recordOLSObservation(pointDiff: Double, ratingDiff: Double, qualifies: Bool, crossKey: String, squaredKey: String, countKey: String) {
+        guard qualifies, ratingDiff != 0 else { return }
+        let ud = UserDefaults.standard
+        ud.set(ud.double(forKey: crossKey) + ratingDiff * pointDiff, forKey: crossKey)
+        ud.set(ud.double(forKey: squaredKey) + ratingDiff * ratingDiff, forKey: squaredKey)
+        ud.set(ud.integer(forKey: countKey) + 1, forKey: countKey)
     }
 
     private func applyResult(to roster: Roster, score: Int, opponentScore: Int, context: NSManagedObjectContext) {
