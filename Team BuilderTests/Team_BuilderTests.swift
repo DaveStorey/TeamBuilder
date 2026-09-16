@@ -319,6 +319,162 @@ final class Team_BuilderTests: XCTestCase {
         XCTAssertEqual(viewModel.teams.count, 0, "Teams should not be set when declining best option")
     }
     
+    // MARK: - Auto Rating Adjustment Tests
+
+    private func resetAdjustmentDefaults() {
+        UserDefaults.standard.removeObject(forKey: "autoAdjustRatings")
+        UserDefaults.standard.removeObject(forKey: "pointsPerRatingUnit")
+        UserDefaults.standard.removeObject(forKey: "adjustmentCurve")
+    }
+
+    func testAutoAdjustDisabledLeavesRatingsUnchanged() throws {
+        resetAdjustmentDefaults()
+        let viewModel = ContentViewViewModel()
+        viewModel.autoAdjustRatings = false
+        viewModel.pointsPerRatingUnit = 1.0
+
+        let a1 = Player(name: "A1", overallRating: 5.0)
+        let a2 = Player(name: "A2", overallRating: 9.0)
+        let b1 = Player(name: "B1", overallRating: 5.0)
+        let b2 = Player(name: "B2", overallRating: 9.0)
+        let teamA = Roster(name: "A", players: [a1, a2])
+        let teamB = Roster(name: "B", players: [b1, b2])
+
+        viewModel.applyRatingAdjustment(to: teamA, opponent: teamB, teamScore: 15, opponentScore: 5, context: nil)
+
+        XCTAssertEqual(a1.overallRating, 5.0)
+        XCTAssertEqual(a2.overallRating, 9.0)
+    }
+
+    func testAutoAdjustOverperformRewardsLowerRatedMore() throws {
+        resetAdjustmentDefaults()
+        let viewModel = ContentViewViewModel()
+        viewModel.autoAdjustRatings = true
+        viewModel.pointsPerRatingUnit = 1.0
+        viewModel.adjustmentCurve = 1
+
+        let a1 = Player(name: "A1", overallRating: 5.0)
+        let a2 = Player(name: "A2", overallRating: 9.0)
+        let b1 = Player(name: "B1", overallRating: 5.0)
+        let b2 = Player(name: "B2", overallRating: 9.0)
+        let teamA = Roster(name: "A", players: [a1, a2])
+        let teamB = Roster(name: "B", players: [b1, b2])
+
+        // Rating diff is 0, expected point diff is 0, actual is +10 → deviation +10
+        // Total adjustment = 0.1 * 10 / 1.0 = +1.0 split by reward weights (10 - rating)
+        viewModel.applyRatingAdjustment(to: teamA, opponent: teamB, teamScore: 15, opponentScore: 5, context: nil)
+
+        let a1Delta = a1.overallRating - 5.0
+        let a2Delta = a2.overallRating - 9.0
+
+        XCTAssertGreaterThan(a1Delta, 0)
+        XCTAssertGreaterThan(a2Delta, 0)
+        XCTAssertGreaterThan(a1Delta, a2Delta, "Lower-rated player should receive a larger reward share")
+        XCTAssertEqual(a1Delta + a2Delta, 1.0, accuracy: 0.0001)
+        // Weights: (10-5)=5, (10-9)=1 → sum 6; a1 gets 5/6, a2 gets 1/6
+        XCTAssertEqual(a1Delta, 5.0 / 6.0, accuracy: 0.0001)
+        XCTAssertEqual(a2Delta, 1.0 / 6.0, accuracy: 0.0001)
+    }
+
+    func testAutoAdjustUnderperformPenalizesHigherRatedMore() throws {
+        resetAdjustmentDefaults()
+        let viewModel = ContentViewViewModel()
+        viewModel.autoAdjustRatings = true
+        viewModel.pointsPerRatingUnit = 1.0
+        viewModel.adjustmentCurve = 1
+
+        let a1 = Player(name: "A1", overallRating: 5.0)
+        let a2 = Player(name: "A2", overallRating: 9.0)
+        let b1 = Player(name: "B1", overallRating: 5.0)
+        let b2 = Player(name: "B2", overallRating: 9.0)
+        let teamA = Roster(name: "A", players: [a1, a2])
+        let teamB = Roster(name: "B", players: [b1, b2])
+
+        // Team B lost 5-15 with equal rating → underperformed by 10 points
+        // Total adjustment = 0.1 * -10 / 1.0 = -1.0 split by penalty weights (rating - 0.1)
+        viewModel.applyRatingAdjustment(to: teamB, opponent: teamA, teamScore: 5, opponentScore: 15, context: nil)
+
+        let b1Delta = b1.overallRating - 5.0
+        let b2Delta = b2.overallRating - 9.0
+
+        XCTAssertLessThan(b1Delta, 0)
+        XCTAssertLessThan(b2Delta, 0)
+        XCTAssertLessThan(b2Delta, b1Delta, "Higher-rated player should receive a larger penalty share")
+        XCTAssertEqual(b1Delta + b2Delta, -1.0, accuracy: 0.0001)
+        // Weights: (5-0.1)=4.9, (9-0.1)=8.9 → sum 13.8
+        XCTAssertEqual(b1Delta, -4.9 / 13.8, accuracy: 0.0001)
+        XCTAssertEqual(b2Delta, -8.9 / 13.8, accuracy: 0.0001)
+    }
+
+    func testAutoAdjustMinBoundaryPlayerReceivesNoPenalty() throws {
+        resetAdjustmentDefaults()
+        let viewModel = ContentViewViewModel()
+        viewModel.autoAdjustRatings = true
+        viewModel.pointsPerRatingUnit = 1.0
+        viewModel.adjustmentCurve = 1
+
+        let bottom = Player(name: "Bottom", overallRating: 0.1)
+        let mid = Player(name: "Mid", overallRating: 5.0)
+        let opp1 = Player(name: "O1", overallRating: 2.55)
+        let opp2 = Player(name: "O2", overallRating: 2.55)
+        let teamA = Roster(name: "A", players: [bottom, mid])
+        let teamB = Roster(name: "B", players: [opp1, opp2])
+
+        viewModel.applyRatingAdjustment(to: teamA, opponent: teamB, teamScore: 3, opponentScore: 15, context: nil)
+
+        XCTAssertEqual(bottom.overallRating, 0.1, accuracy: 0.0001, "0.1-rated player must never be penalized")
+        XCTAssertLessThan(mid.overallRating, 5.0)
+    }
+
+    func testAutoAdjustMaxBoundaryPlayerReceivesNoReward() throws {
+        resetAdjustmentDefaults()
+        let viewModel = ContentViewViewModel()
+        viewModel.autoAdjustRatings = true
+        viewModel.pointsPerRatingUnit = 1.0
+        viewModel.adjustmentCurve = 1
+
+        let top = Player(name: "Top", overallRating: 10.0)
+        let mid = Player(name: "Mid", overallRating: 5.0)
+        let opp1 = Player(name: "O1", overallRating: 7.5)
+        let opp2 = Player(name: "O2", overallRating: 7.5)
+        let teamA = Roster(name: "A", players: [top, mid])
+        let teamB = Roster(name: "B", players: [opp1, opp2])
+
+        viewModel.applyRatingAdjustment(to: teamA, opponent: teamB, teamScore: 15, opponentScore: 3, context: nil)
+
+        XCTAssertEqual(top.overallRating, 10.0, accuracy: 0.0001, "10.0-rated player must never be rewarded")
+        XCTAssertGreaterThan(mid.overallRating, 5.0)
+    }
+
+    func testAutoAdjustQuadraticCurveIsMoreAsymmetric() throws {
+        resetAdjustmentDefaults()
+        let viewModel = ContentViewViewModel()
+        viewModel.autoAdjustRatings = true
+        viewModel.pointsPerRatingUnit = 1.0
+
+        func delta(curve: Int) -> (Double, Double) {
+            viewModel.adjustmentCurve = curve
+            let low = Player(name: "Low", overallRating: 3.0)
+            let high = Player(name: "High", overallRating: 8.0)
+            let opp1 = Player(name: "O1", overallRating: 5.5)
+            let opp2 = Player(name: "O2", overallRating: 5.5)
+            let teamA = Roster(name: "A", players: [low, high])
+            let teamB = Roster(name: "B", players: [opp1, opp2])
+            viewModel.applyRatingAdjustment(to: teamA, opponent: teamB, teamScore: 15, opponentScore: 5, context: nil)
+            return (low.overallRating - 3.0, high.overallRating - 8.0)
+        }
+
+        let (lowLinear, highLinear) = delta(curve: 1)
+        let (lowQuadratic, highQuadratic) = delta(curve: 2)
+
+        // Both curves reward the lower player more.
+        XCTAssertGreaterThan(lowLinear, highLinear)
+        XCTAssertGreaterThan(lowQuadratic, highQuadratic)
+        // Quadratic further favors the low player (larger low share / smaller high share).
+        XCTAssertGreaterThan(lowQuadratic, lowLinear)
+        XCTAssertLessThan(highQuadratic, highLinear)
+    }
+
     // MARK: - Performance Tests
     
     func testPlayerCreationPerformance() throws {

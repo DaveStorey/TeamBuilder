@@ -61,8 +61,10 @@ struct ContentView: View {
             )
         }
         .popover(isPresented: $popupRosterOptions) {
+            let baseHeight: CGFloat = viewModel.useOverall ? 300 : 500
+            let extraHeight: CGFloat = viewModel.autoAdjustRatings ? 260 : 60
             TeamOptionsView(viewModel: viewModel)
-                .presentationDetents([.height(viewModel.useOverall ? 300 : 500)])
+                .presentationDetents([.height(baseHeight + extraHeight), .large])
         }
         .onAppear {
             viewModel.loadSavedTeams()

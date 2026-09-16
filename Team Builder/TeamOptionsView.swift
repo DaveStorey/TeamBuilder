@@ -18,7 +18,8 @@ struct TeamOptionsView: View {
             Color.secondary
                 .opacity(0.2)
                 .ignoresSafeArea()
-            VStack(spacing: 10) {
+            ScrollView {
+                VStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("How many teams?")
                         .padding(.leading)
@@ -26,9 +27,10 @@ struct TeamOptionsView: View {
                         .padding(.horizontal)
                         .textFieldStyle(.roundedBorder)
                         .keyboardType(.numberPad)
-                    Toggle(isOn: $viewModel.useOverall, label: { Text("Use overall ratings") })
-                        .padding(.horizontal)
                 }
+                Divider().padding(.horizontal)
+                Toggle(isOn: $viewModel.useOverall, label: { Text("Use overall ratings") })
+                    .padding(.horizontal)
                 if !viewModel.useOverall {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("What is the maximum throw rating variance between teams?")
@@ -56,7 +58,7 @@ struct TeamOptionsView: View {
                             .keyboardType(.decimalPad)
                     }
                 } else {
-                    VStack {
+                    VStack(alignment: .leading, spacing: 3) {
                         Text("What is the maximum overall rating variance between teams?")
                             .lineLimit(2)
                             .padding(.leading)
@@ -66,18 +68,51 @@ struct TeamOptionsView: View {
                             .keyboardType(.decimalPad)
                     }
                 }
-                Text("Maximum Iterations")
-                    .padding(.leading)
-                TextField("Maximum Iterations", value: $viewModel.iterations, format: .number)
-                    .padding(.horizontal)
-                    .textFieldStyle(.roundedBorder)
-                    .keyboardType(.numberPad)
+                Divider().padding(.horizontal)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Maximum Iterations")
+                        .padding(.leading)
+                    TextField("Maximum Iterations", value: $viewModel.iterations, format: .number)
+                        .padding(.horizontal)
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.numberPad)
+                }
+
+                Divider().padding(.horizontal)
+                VStack(alignment: .leading, spacing: 6) {
+                    Toggle(isOn: $viewModel.autoAdjustRatings, label: { Text("Auto-adjust ratings after games") })
+                        .padding(.horizontal)
+                    if viewModel.autoAdjustRatings {
+                        Text("Points per rating unit")
+                            .padding(.leading)
+                        TextField("Points per rating unit", value: $viewModel.pointsPerRatingUnit, format: .number)
+                            .padding(.horizontal)
+                            .textFieldStyle(.roundedBorder)
+                            .keyboardType(.decimalPad)
+
+                        Text("Adjustment curve")
+                            .padding(.leading)
+                        Picker("Adjustment curve", selection: $viewModel.adjustmentCurve) {
+                            Text("Linear (1)").tag(1)
+                            Text("Quadratic (2)").tag(2)
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal)
+                        Text("1 = linear proximity to the rating cap. 2 = steeper curve — low-rated players are shielded from penalties for longer, and high-rated players receive smaller rewards until further from the cap.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal)
+                    }
+                }
+
                 Button(action: {
                     self.dismiss.callAsFunction()
                 }, label: { Text("Save").foregroundStyle(.white) })
                 .padding()
                 .background(.blue)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .padding(.vertical)
             }
         }
     }

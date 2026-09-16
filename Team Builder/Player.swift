@@ -201,9 +201,13 @@ class Player: Identifiable, Equatable, Hashable {
         updateRequest.resultType = .statusOnlyResultType
         do {
             let result = try context.execute(updateRequest)
+            #if DEBUG
             print("Persistence result: \(result.description)")
+            #endif
         } catch(let error) {
+            #if DEBUG
             print("Persistence update error: \(error.localizedDescription)")
+            #endif
         }
     }
     

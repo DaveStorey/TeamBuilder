@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreData
+import SwiftUI
 
 class ContentViewViewModel: ObservableObject {
     @Published var playerList: [Player] = []
@@ -25,9 +26,16 @@ class ContentViewViewModel: ObservableObject {
     @Published var defenseVariance = 0.4
     @Published var useOverall = false
     @Published var teamDiffError = false
+    @AppStorage("autoAdjustRatings") var autoAdjustRatings: Bool = false
+    @AppStorage("pointsPerRatingUnit") var pointsPerRatingUnit: Double = 1.0
+    @AppStorage("adjustmentCurve") var adjustmentCurve: Int = 1
     var iterations = 600
     var teamErrorString = "No teams found with the specified parameters. The best option found has a difference of -0.0"
     private var generationCount = 0
+    // Learning rate: fraction of the point-deviation (converted to rating units) applied per game.
+    private let adjustmentStrength = 0.1
+    static let minRatingBound = 0.1
+    static let maxRatingBound = 10.0
     
     private func createTeams() {
         generateTeams()
@@ -200,6 +208,38 @@ class ContentViewViewModel: ObservableObject {
 
         applyResult(to: roster, score: teamScore, opponentScore: opponentScore, context: context)
         applyResult(to: opponentRoster, score: opponentScore, opponentScore: teamScore, context: context)
+
+        applyRatingAdjustment(to: roster, opponent: opponentRoster, teamScore: teamScore, opponentScore: opponentScore, context: context)
+        applyRatingAdjustment(to: opponentRoster, opponent: roster, teamScore: opponentScore, opponentScore: teamScore, context: context)
+    }
+
+    func applyRatingAdjustment(to roster: Roster, opponent: Roster, teamScore: Int, opponentScore: Int, context: NSManagedObjectContext?) {
+        guard autoAdjustRatings, pointsPerRatingUnit > 0 else { return }
+        let pointDiff = Double(teamScore - opponentScore)
+        let ratingDiff = roster.averageRating - opponent.averageRating
+        let expected = ratingDiff * pointsPerRatingUnit
+        let deviation = pointDiff - expected
+        guard deviation != 0 else { return }
+
+        let totalAdjustment = adjustmentStrength * deviation / pointsPerRatingUnit
+        let p = Double(adjustmentCurve)
+        let boundary = totalAdjustment >= 0 ? Self.maxRatingBound : Self.minRatingBound
+
+        let weights = roster.players.map { player -> Double in
+            pow(max(0, abs(boundary - player.overallRating)), p)
+        }
+        let sumWeights = weights.reduce(0, +)
+        guard sumWeights > 0 else { return }
+
+        for (index, player) in roster.players.enumerated() {
+            let share = totalAdjustment * weights[index] / sumWeights
+            let newRating = min(Self.maxRatingBound, max(Self.minRatingBound, player.overallRating + share))
+            guard newRating != player.overallRating else { continue }
+            player.overallRating = newRating
+            if let context {
+                player.updatePlayer([.overallRating(newRating)], context: context)
+            }
+        }
     }
 
     private func recordOLSObservation(pointDiff: Double, ratingDiff: Double, qualifies: Bool, crossKey: String, squaredKey: String, countKey: String) {
