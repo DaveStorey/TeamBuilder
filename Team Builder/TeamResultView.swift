@@ -22,48 +22,56 @@ struct TeamResultView: View {
     }
 
     var body: some View {
-        ZStack {
-            Color.secondary
-                .opacity(0.2)
-                .ignoresSafeArea()
+        ScrollView {
             VStack(spacing: 24) {
-                Text("Game Result")
+                Label("Game Result", systemImage: "trophy.fill")
                     .font(.largeTitle)
+                    .foregroundStyle(.indigo)
                     .padding(.top)
 
                 if otherTeams.count > 1 {
-                    Text("Select \(team)'s opponent")
-                    Picker("Opponent", selection: $selectedOpponent) {
-                        ForEach(otherTeams, id: \.name) { roster in
-                            Text(roster.name).tag(roster.name)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Select \(team)'s opponent")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Picker("Opponent", selection: $selectedOpponent) {
+                            ForEach(otherTeams, id: \.name) { roster in
+                                Text(roster.name).tag(roster.name)
+                            }
                         }
+                        .pickerStyle(.automatic)
                     }
-                    .pickerStyle(.automatic)
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Color(.secondarySystemGroupedBackground)))
                     .padding(.horizontal)
                 }
 
-                HStack(spacing: 40) {
+                HStack(spacing: 24) {
                     scoreColumn(label: team, score: $teamScore)
                     Text("vs")
-                        .font(.title2)
+                        .font(.title2.bold())
+                        .foregroundStyle(.secondary)
                     scoreColumn(label: selectedOpponent.isEmpty ? "Opponent" : selectedOpponent, score: $opponentScore)
                 }
                 .padding()
+                .background(RoundedRectangle(cornerRadius: 14).fill(Color(.secondarySystemGroupedBackground)))
+                .padding(.horizontal)
 
                 Button(action: {
                     viewModel.gameResult(team: team, teamScore: teamScore, opponent: selectedOpponent, opponentScore: opponentScore, context: viewContext)
                     dismiss()
-                }, label: {
-                    Text("Save")
-                        .foregroundStyle(.white)
-                        .padding()
-                        .frame(minWidth: 120)
-                        .background(selectedOpponent.isEmpty ? Color.gray : Color.blue)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                })
+                }) {
+                    Label("Save", systemImage: "checkmark.circle.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .padding(.horizontal)
                 .disabled(selectedOpponent.isEmpty)
             }
+            .padding(.bottom)
         }
+        .background(Color(.systemGroupedBackground))
         .onAppear {
             selectedOpponent = otherTeams.first?.name ?? ""
         }
@@ -81,5 +89,6 @@ struct TeamResultView: View {
                 .font(.system(size: 44, weight: .bold))
                 .monospacedDigit()
         }
+        .frame(maxWidth: .infinity)
     }
 }

@@ -23,23 +23,22 @@ struct RosterView: View {
     @FocusState private var isFocused: Bool
     
     var body: some View {
-        ZStack {
-            Color.secondary
-                .opacity(0.2)
-                .ignoresSafeArea()
-            
-            VStack(spacing: 15) {
-                rosterHeader
-                playerListView
-                playerBuilder
-            }
+        VStack(spacing: 0) {
+            playerListView
+            playerBuilder
         }
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle("Roster")
         .toolbar {
             ToolbarItem(placement: .destructiveAction, content: {
-                Button("Clear Roster", action: { rosterClearAlert = true })
+                Button(role: .destructive, action: { rosterClearAlert = true }) {
+                    Label("Clear Roster", systemImage: "trash")
+                }
             })
             ToolbarItem(placement: .automatic, content: {
-                Button("Select All", action: { selectAllPlayers() })
+                Button(action: { selectAllPlayers() }) {
+                    Label("Select All", systemImage: "checkmark.circle")
+                }
              })
         }
         .onAppear { getPlayers() }
@@ -63,36 +62,57 @@ struct RosterView: View {
 
 private extension RosterView {
     
-    // MARK: - Header
-    var rosterHeader: some View {
-        Text("Roster")
-            .font(.headline)
-    }
-    
     // MARK: - Player List View
     var playerListView: some View {
-        List($playerList.sorted {
-            let lhs = $0.wrappedValue
-            let rhs = $1.wrappedValue
-            // Order players by winning percentage, then total wins, then alphabetically. Note switch of lhs/rhs for name, otherwise
-            // it sorts in reverse alphabetic order.
-            return (lhs.winningPercentage, lhs.wins, rhs.name) > (rhs.winningPercentage, rhs.wins, lhs.name)
-        } ) { $player in
-            playerRow(player: player)
+        Group {
+            if playerList.isEmpty {
+                ContentUnavailableView {
+                    Label("No Players", systemImage: "person.3")
+                } description: {
+                    Text("Create a player to add them to your roster.")
+                }
+            } else {
+                List($playerList.sorted {
+                    let lhs = $0.wrappedValue
+                    let rhs = $1.wrappedValue
+                    // Order players by winning percentage, then total wins, then alphabetically. Note switch of lhs/rhs for name, otherwise
+                    // it sorts in reverse alphabetic order.
+                    return (lhs.winningPercentage, lhs.wins, rhs.name) > (rhs.winningPercentage, rhs.wins, lhs.name)
+                } ) { $player in
+                    playerRow(player: player)
+                }
+                .listStyle(.insetGrouped)
+            }
         }
     }
     
     @ViewBuilder
     private func playerRow(player: Player) -> some View {
-        HStack {
-            Text(player.name)
-            Text(player.gender.displayText)
-            Text("\(String(format: "%.2f", player.winningPercentage))")
-            
-            if let isSelected = selectedPlayers[player], isSelected {
-                Image(systemName: "checkmark")
+        let isSelected = selectedPlayers[player] ?? false
+        HStack(spacing: 12) {
+            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.4))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(player.name)
+                    .font(.body)
+                Text(String(format: "%.0f%% win rate", player.winningPercentage * 100))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
+
+            Spacer()
+
+            Text(player.gender.displayText)
+                .font(.caption.bold())
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Capsule().fill((player.gender == .mmp ? Color.blue : Color.green).opacity(0.15)))
+                .foregroundStyle(player.gender == .mmp ? .blue : .green)
         }
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
         .swipeActions(edge: .trailing) {
             deletePlayerAction(player)
         }
@@ -103,7 +123,8 @@ private extension RosterView {
             Button(action: {
                 displayPlayerInfo = true
                 playerInfo = player
-            }, label: { Label("Info", systemImage: "info")})
+            }, label: { Label("Info", systemImage: "info.circle") })
+            .tint(.indigo)
         }
     }
 
@@ -132,16 +153,23 @@ private extension RosterView {
 
     // MARK: - Player Builder
     var playerBuilder: some View {
-        HStack {
-            NavigationLink(destination: { PlayerCreationView(playerList: $playerList) }, label: { Text("Create Player") })
-                .padding(.leading, 30)
-                .padding(.bottom, 20)
-            Spacer()
-            NavigationLink(destination: { RosterInfoView(players: playerList)}, label: { Text("Records") })
-                .padding(.trailing, 30)
-                .padding(.bottom, 20)
+        HStack(spacing: 12) {
+            NavigationLink(destination: { PlayerCreationView(playerList: $playerList) }) {
+                Label("Create Player", systemImage: "person.badge.plus")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+
+            NavigationLink(destination: { RosterInfoView(players: playerList)}) {
+                Label("Records", systemImage: "chart.bar.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
         }
-        .frame(height: 65)
+        .controlSize(.large)
+        .padding(.horizontal)
+        .padding(.vertical, 12)
+        .background(Color(.systemGroupedBackground))
     }
     
     private func playerDelete(_ player: Player) {

@@ -8,22 +8,12 @@
 import SwiftUI
 
 struct RosterInfoView: View {
-    private enum SortedBy: String {
-            case percent = "Percentage"
+    private enum SortedBy: String, CaseIterable {
+            case percent = "Win %"
             case wins = "Wins"
             case losses = "Losses"
             case name = "Name"
             case pointDiff = "Point Diff"
-            
-            var next: SortedBy {
-                switch self {
-                case .percent: return .wins
-                case .wins: return .losses
-                case .losses: return .name
-                case .name: return .pointDiff
-                case .pointDiff: return .percent
-                }
-            }
         }
     
     let players: [Player]
@@ -51,7 +41,7 @@ struct RosterInfoView: View {
             if goalCount > 0 {
                 Section {
                     VStack(spacing: 4) {
-                        Text("Goals per Rating Point")
+                        Label("Goals per Rating Point", systemImage: "chart.xyaxis.line")
                             .font(.headline)
                         Text(String(format: "%.2f", goalCrossProduct / goalSumSquaredDiffs))
                             .font(.system(size: 36, weight: .bold))
@@ -105,35 +95,28 @@ struct RosterInfoView: View {
                     Text(player.name).font(.headline)
                     Spacer()
                 }) {
-                    VStack {
-                        HStack {
-                            VStack {
-                                Text("Wins")
-                                Text("\(player.wins)")
-                            }
-                            Spacer()
-                            VStack {
-                                Text("Losses")
-                                Text("\(player.losses)")
-                            }
-                            Spacer()
-                            VStack {
-                                Text("Ties")
-                                Text("\(player.ties)")
-                            }
-                        }
-                        Text("Point Diff")
-                        Text("\(player.pointDifferential)")
+                    HStack(spacing: 8) {
+                        statChip(label: "W", value: "\(player.wins)", color: .green)
+                        statChip(label: "L", value: "\(player.losses)", color: .red)
+                        statChip(label: "T", value: "\(player.ties)", color: .orange)
+                        statChip(label: "DIFF", value: (player.pointDifferential >= 0 ? "+" : "") + "\(player.pointDifferential)", color: player.pointDifferential >= 0 ? .green : .red)
                     }
+                    .padding(.vertical, 4)
                 }
             }
         }
+        .listStyle(.insetGrouped)
         .toolbar {
-            ToolbarItem(placement: .automatic, content: {
-                        Button("Sorted by \(sortedBy.rawValue)", action: {
-                            sortedBy = sortedBy.next
-                        })
-                    })
+            ToolbarItem(placement: .automatic) {
+                Picker(selection: $sortedBy) {
+                    ForEach(SortedBy.allCases, id: \.self) { option in
+                        Text(option.rawValue).tag(option)
+                    }
+                } label: {
+                    Label("Sort: \(sortedBy.rawValue)", systemImage: "arrow.up.arrow.down")
+                }
+                .pickerStyle(.menu)
+            }
         }
     }
 
@@ -156,5 +139,20 @@ struct RosterInfoView: View {
             .padding(.vertical, 4)
             .transition(.opacity)
         }
+    }
+
+    private func statChip(label: String, value: String, color: Color) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.headline)
+                .monospacedDigit()
+                .foregroundStyle(color)
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
+        .background(RoundedRectangle(cornerRadius: 10).fill(color.opacity(0.12)))
     }
 }

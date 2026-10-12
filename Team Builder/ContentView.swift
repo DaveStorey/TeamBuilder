@@ -14,36 +14,55 @@ struct ContentView: View {
 
     var body: some View {
         NavigationView {
-            List {
-                ForEach(viewModel.teams) { roster in
-                    TeamSectionView(roster: roster, viewModel: viewModel)
-                    PlayerListView(players: roster.players)
+            Group {
+                if viewModel.teams.isEmpty {
+                    ContentUnavailableView {
+                        Label("No Teams Yet", systemImage: "person.3.fill")
+                    } description: {
+                        Text("Add players to your roster, then build teams to get started.")
+                    }
+                } else {
+                    List {
+                        ForEach(viewModel.teams) { roster in
+                            Section {
+                                PlayerListView(players: roster.players)
+                            } header: {
+                                TeamSectionHeader(roster: roster, viewModel: viewModel)
+                                    .textCase(nil)
+                            }
+                        }
+                    }
+                    .listStyle(.insetGrouped)
                 }
             }
+            .navigationTitle("Team Builder")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink(
                         destination: RosterView(playerList: $viewModel.playerList, selectedPlayers: $viewModel.selectedPlayers),
-                        label: { Text("Add Players") }
+                        label: { Label("Add Players", systemImage: "person.badge.plus") }
                     )
-                    .navigationBarTitleDisplayMode(.inline)
                 }
                 ToolbarItem(placement: .bottomBar) {
-                    Button("Team Options") { popupRosterOptions = true }
+                    Button(action: { popupRosterOptions = true }) {
+                        Label("Team Options", systemImage: "slider.horizontal.3")
+                    }
                 }
                 if !viewModel.selectedPlayers.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Build Teams", action: {
+                        Button(action: {
                             withAnimation {
                                 viewModel.randomize()
                             }
-                        })
+                        }) {
+                            Label("Build Teams", systemImage: "shuffle")
+                        }
                     }
                 }
                 if !viewModel.teams.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Save Teams") {
-                            viewModel.saveCurrentTeams()
+                        Button(action: { viewModel.saveCurrentTeams() }) {
+                            Label("Save Teams", systemImage: "square.and.arrow.down")
                         }
                     }
                 }
@@ -72,22 +91,20 @@ struct ContentView: View {
     }
 }
 
-struct TeamSectionView: View {
+struct TeamSectionHeader: View {
     let roster: Roster
     @ObservedObject var viewModel: ContentViewViewModel
 
     var body: some View {
-        ZStack {
-            Color.indigo
-                .opacity(0.5)
-                .ignoresSafeArea()
+        NavigationLink(destination: TeamResultView(viewModel: viewModel, team: roster.name)) {
             HStack {
-                NavigationLink(
-                    destination: TeamResultView(viewModel: viewModel, team: roster.name),
-                    label: { Text(roster.name).font(.headline).foregroundStyle(.white) }
-                )
+                Label(roster.name, systemImage: "shield.fill")
+                    .font(.headline)
+                    .foregroundStyle(.indigo)
+                Spacer()
                 TeamInfoView(roster: roster)
             }
+            .padding(.vertical, 4)
         }
     }
 }
@@ -96,15 +113,27 @@ struct TeamInfoView: View {
     let roster: Roster
 
     var body: some View {
-        HStack {
-            Text("(\(roster.numberOfPlayers(for: .mmp)) : \(roster.numberOfPlayers(for: .wmp)))")
-                .font(.subheadline)
-                .foregroundStyle(.white)
-            Text("\(String(format: "%.2f", roster.averageRating))")
-                .font(.subheadline)
-                .foregroundStyle(.white)
-                .padding([.trailing])
+        HStack(spacing: 6) {
+            genderBadge(count: roster.numberOfPlayers(for: .mmp), color: .blue)
+            genderBadge(count: roster.numberOfPlayers(for: .wmp), color: .green)
+            Text(String(format: "%.2f", roster.averageRating))
+                .font(.caption.bold())
+                .monospacedDigit()
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(Color.indigo.opacity(0.18)))
+                .foregroundStyle(.indigo)
         }
+    }
+
+    private func genderBadge(count: Int, color: Color) -> some View {
+        Text("\(count)")
+            .font(.caption.bold())
+            .monospacedDigit()
+            .frame(minWidth: 20)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(color.opacity(0.18)))
+            .foregroundStyle(color)
     }
 }
 
@@ -113,13 +142,20 @@ struct PlayerListView: View {
 
     var body: some View {
         ForEach(players) { player in
-            HStack {
+            HStack(spacing: 10) {
+                Image(systemName: "person.fill")
+                    .foregroundStyle(player.gender == .mmp ? .blue : .green)
                 Text(player.name)
                     .lineLimit(1, reservesSpace: true)
                 Spacer()
                 Text(player.gender.displayText)
+                    .font(.caption.bold())
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill((player.gender == .mmp ? Color.blue : Color.green).opacity(0.15)))
                     .foregroundStyle(player.gender == .mmp ? .blue : .green)
             }
+            .padding(.vertical, 2)
         }
     }
 }

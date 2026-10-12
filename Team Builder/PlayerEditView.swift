@@ -29,6 +29,20 @@ struct PlayerEditView: View {
             case .wins, .losses, .ties: return String(describing: self).capitalized
             }
         }
+        
+        var icon: String {
+            switch self {
+            case .name: return "person.fill"
+            case .gender: return "figure.stand"
+            case .overallRating: return "star.fill"
+            case .throwRating: return "arrow.up.forward.circle.fill"
+            case .cutRating: return "bolt.fill"
+            case .defenseRating: return "shield.fill"
+            case .wins: return "checkmark.circle.fill"
+            case .losses: return "xmark.circle.fill"
+            case .ties: return "equal.circle.fill"
+            }
+        }
     }
     
     @Environment(\.dismiss) private var dismiss
@@ -37,131 +51,83 @@ struct PlayerEditView: View {
     @FocusState private var focusedField: Field?
         
     var body: some View {
-        ZStack {
-            Color.secondary.opacity(0.2)
-                .ignoresSafeArea()
-            Form {
-                VStack(spacing: 20) {
-                    Text("Edit \(viewModel.player.name)")
-                        .font(.largeTitle)
-                    
-                    // Name Section
-                    Section(header: Text("Player Information")) {
-                        SectionView("Name") {
-                            if let errorMessage = viewModel.nameError {
-                                Text(errorMessage)
-                                    .font(.footnote)
-                                    .foregroundStyle(.red)
-                            }
-                            TextField("Player Name", text: $viewModel.player.name)
-                                .textFieldStyle(.roundedBorder)
-                                .autocorrectionDisabled(true)
-                                .focused($focusedField, equals: .name)
-                        }
-                        
-                        // Gender Match Picker
-                        SectionView("Gender Match") {
-                            Picker("Gender Match", selection: $viewModel.player.gender) {
-                                Text("MMP").tag(GenderMatch.mmp)
-                                Text("WMP").tag(GenderMatch.wmp)
-                            }
-                            .pickerStyle(SegmentedPickerStyle()) // A more user-friendly style
-                            .focused($focusedField, equals: .gender)
-                        }
-                    }
-                    
-                    // Rating Section
-                    Section(header: Text("Ratings")) {
-                        VStack {
-                            if let errorMessage = viewModel.errorMessage {
-                                Text(errorMessage)
-                                    .font(.footnote)
-                                    .foregroundStyle(.red)
-                            }
-                            SectionView("Overall Rating") {
-                                playerRatingField(rating: $viewModel.player.overallRating, focus: .overallRating)
-                            }
-                            SectionView("Throw Rating") {
-                                playerRatingField(rating: $viewModel.player.throwRating, focus: .throwRating)
-                            }
-                            SectionView("Cut Rating") {
-                                playerRatingField(rating: $viewModel.player.cutRating, focus: .cutRating)
-                            }
-                            SectionView("Defense Rating") {
-                                playerRatingField(rating: $viewModel.player.defenseRating, focus: .defenseRating)
-                            }
-                        }
-                    }
-                    
-                    // Wins Section
-                    Section(header: Text("Record")) {
-                        SectionView("Wins") {
-                            playerTextField(value: $viewModel.player.wins, field: .wins)
-                        }
-                        
-                        // Losses Section
-                        SectionView("Losses") {
-                            playerTextField(value: $viewModel.player.losses, field: .losses)
-                        }
-                        
-                        // Ties Section
-                        SectionView("Ties") {
-                            playerTextField(value: $viewModel.player.ties, field: .ties)
-                        }
-                    }
-                    
-                    // Save Button
-                    Button(action: {
-                        viewModel.updatePlayer(context: viewContext)
-                        dismiss()
-                    }) {
-                        Text("Save Player")
-                            .foregroundColor(.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(viewModel.errorPresent ? .gray : .blue)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                    }
-                    .disabled(viewModel.errorPresent)
+        Form {
+            Section(header: Text("Player Information")) {
+                if let errorMessage = viewModel.nameError {
+                    errorBanner(errorMessage)
                 }
-                .padding()
+                TextField("Player Name", text: $viewModel.player.name)
+                    .autocorrectionDisabled(true)
+                    .focused($focusedField, equals: .name)
+                
+                Picker("Gender Match", selection: $viewModel.player.gender) {
+                    Text("MMP").tag(GenderMatch.mmp)
+                    Text("WMP").tag(GenderMatch.wmp)
+                }
+                .pickerStyle(.segmented)
+                .focused($focusedField, equals: .gender)
+            }
+            
+            Section(header: Text("Ratings")) {
+                if let errorMessage = viewModel.errorMessage {
+                    errorBanner(errorMessage)
+                }
+                ratingField(rating: $viewModel.player.overallRating, focus: .overallRating)
+                ratingField(rating: $viewModel.player.throwRating, focus: .throwRating)
+                ratingField(rating: $viewModel.player.cutRating, focus: .cutRating)
+                ratingField(rating: $viewModel.player.defenseRating, focus: .defenseRating)
+            }
+            
+            Section(header: Text("Record")) {
+                recordField(value: $viewModel.player.wins, field: .wins)
+                recordField(value: $viewModel.player.losses, field: .losses)
+                recordField(value: $viewModel.player.ties, field: .ties)
+            }
+            
+            Section {
+                Button(action: {
+                    viewModel.updatePlayer(context: viewContext)
+                    dismiss()
+                }) {
+                    Label("Save Player", systemImage: "checkmark.circle.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .disabled(viewModel.errorPresent)
             }
         }
+        .navigationTitle("Edit \(viewModel.player.name)")
+        .navigationBarTitleDisplayMode(.inline)
     }
     
-    // A reusable TextField component to reduce redundancy
-    private func playerTextField(value: Binding<Int>, field: Field) -> some View {
-        TextField(field.fieldTitle, value: value, format: .number)
-            .textFieldStyle(.roundedBorder)
-            .keyboardType(.numberPad)
-            .focused($focusedField, equals: field)
+    private func errorBanner(_ message: String) -> some View {
+        Label(message, systemImage: "exclamationmark.triangle.fill")
+            .font(.footnote)
+            .foregroundStyle(.red)
     }
     
-    private func playerRatingField(rating: Binding<Double>, focus: Field) -> some View {
-        VStack {
+    private func ratingField(rating: Binding<Double>, focus: Field) -> some View {
+        HStack {
+            Label(focus.fieldTitle, systemImage: focus.icon)
+            Spacer()
             TextField(focus.fieldTitle, value: rating, format: .number)
-                .textFieldStyle(.roundedBorder)
                 .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 70)
                 .focused($focusedField, equals: focus)
         }
     }
-
-    struct SectionView<Content: View>: View {
-        var title: String
-        var content: () -> Content
-
-        init(_ title: String, @ViewBuilder content: @escaping () -> Content) {
-            self.title = title
-            self.content = content
-        }
-
-        var body: some View {
-            VStack(alignment: .leading) {
-                Text(title)
-                    .font(.headline)
-                content()
-            }
-            .padding(.horizontal)
+    
+    private func recordField(value: Binding<Int>, field: Field) -> some View {
+        HStack {
+            Label(field.fieldTitle, systemImage: field.icon)
+            Spacer()
+            TextField(field.fieldTitle, value: value, format: .number)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 70)
+                .focused($focusedField, equals: field)
         }
     }
 }

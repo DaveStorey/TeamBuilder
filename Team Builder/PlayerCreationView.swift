@@ -35,56 +35,27 @@ struct PlayerCreationView: View {
     var body: some View {
         Form {
             Section(header: Text("Player Information")) {
-                VStack(spacing: 5) {
-                    if let nameIsEmpty {
-                        Text(nameIsEmpty)
-                            .font(.footnote)
-                            .foregroundStyle(.red)
-                    }
-                    TextField("Name", text: $name)
-                        .autocorrectionDisabled()
-                        .focused($field, equals: .name)
-                    genderPicker
+                if let nameIsEmpty {
+                    errorBanner(nameIsEmpty)
                 }
+                TextField("Name", text: $name)
+                    .autocorrectionDisabled()
+                    .focused($field, equals: .name)
+                genderPicker
             }
             
             Section(header: Text("Ratings")) {
-                VStack(spacing: 5) {
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .font(.footnote)
-                            .foregroundStyle(.red)
-                    }
-                    Text("Overall Rating")
-                        .font(.callout)
-                    playerRatingField(title: "Overall Rating", rating: $overallRating)
-                        .focused($field, equals: .overall)
-                    ratingSpacer
-                    Text("Throw Rating")
-                        .font(.callout)
-                    playerRatingField(title: "Throw Rating", rating: $throwRating)
-                        .focused($field, equals: .throwing)
-                    ratingSpacer
-                    Text("Cut Rating")
-                        .font(.callout)
-                    playerRatingField(title: "Cut Rating", rating: $cutRating)
-                        .focused($field, equals: .cutting)
-                    ratingSpacer
-                    Text("Defense Rating")
-                        .font(.callout)
-                    playerRatingField(title: "Defense Rating", rating: $defenseRating)
-                        .focused($field, equals: .defense)
+                if let errorMessage {
+                    errorBanner(errorMessage)
                 }
-                .onChange(of: field, perform: { value in
-                    if errorMessage != nil && ratingsAreAcceptable {
-                        errorMessage = nil
-                    }
-                    if name.isEmpty {
-                        nameIsEmpty = "Name cannot be empty"
-                    } else {
-                        nameIsEmpty = nil
-                    }
-                })
+                ratingRow(title: "Overall Rating", icon: "star.fill", rating: $overallRating)
+                    .focused($field, equals: .overall)
+                ratingRow(title: "Throw Rating", icon: "arrow.up.forward.circle.fill", rating: $throwRating)
+                    .focused($field, equals: .throwing)
+                ratingRow(title: "Cut Rating", icon: "bolt.fill", rating: $cutRating)
+                    .focused($field, equals: .cutting)
+                ratingRow(title: "Defense Rating", icon: "shield.fill", rating: $defenseRating)
+                    .focused($field, equals: .defense)
             }
             
             Section(header: Text("Record")) {
@@ -93,16 +64,25 @@ struct PlayerCreationView: View {
                 Stepper("Ties: \(ties)", value: $ties)
             }
             
-            Button(action: savePlayer) {
-                Text("Save Player")
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(errorFree ? .blue : .gray)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                    
+            Section {
+                Button(action: savePlayer) {
+                    Label("Save Player", systemImage: "checkmark.circle.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .disabled(errorMessage != nil)
             }
-            .disabled(errorMessage != nil)
+        }
+        .onChange(of: field) { _, _ in
+            if errorMessage != nil && ratingsAreAcceptable {
+                errorMessage = nil
+            }
+            if name.isEmpty {
+                nameIsEmpty = "Name cannot be empty"
+            } else {
+                nameIsEmpty = nil
+            }
         }
         .navigationTitle("Create Player")
     }
@@ -110,9 +90,10 @@ struct PlayerCreationView: View {
 
 extension PlayerCreationView {
     
-    private var ratingSpacer: some View {
-        Spacer()
-            .frame(height: 15)
+    private func errorBanner(_ message: String) -> some View {
+        Label(message, systemImage: "exclamationmark.triangle.fill")
+            .font(.footnote)
+            .foregroundStyle(.red)
     }
     
     private var ratingsAreAcceptable: Bool {
@@ -131,15 +112,19 @@ extension PlayerCreationView {
         .pickerStyle(.segmented)
     }
     
-    private func playerRatingField(title: String, rating: Binding<Double>) -> some View {
-        VStack {
+    private func ratingRow(title: String, icon: String, rating: Binding<Double>) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label(title, systemImage: icon)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             TextField(title, value: rating, format: .number)
                 .textFieldStyle(.roundedBorder)
                 .keyboardType(.decimalPad)
-                .onChange(of: rating.wrappedValue) { newValue in
+                .onChange(of: rating.wrappedValue) { _, newValue in
                     checkRating(field: title, rating: newValue)
                 }
         }
+        .padding(.vertical, 2)
     }
     
     private func savePlayer() {
