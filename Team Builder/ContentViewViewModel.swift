@@ -278,5 +278,14 @@ class ContentViewViewModel: ObservableObject {
             self.teams = saved
         }
     }
-    
+
+    // MARK: - Manual Team Editing
+    func movePlayer(withID idString: String, to destination: Roster) {
+        guard let source = teams.first(where: { $0.players.contains(where: { $0.idString == idString }) }),
+              source !== destination,
+              let index = source.players.firstIndex(where: { $0.idString == idString }) else { return }
+        let player = source.players.remove(at: index)
+        destination.players.append(player)
+    }
+
 }

@@ -22,17 +22,32 @@ struct ContentView: View {
                         Text("Add players to your roster, then build teams to get started.")
                     }
                 } else {
-                    List {
-                        ForEach(viewModel.teams) { roster in
-                            Section {
-                                PlayerListView(players: roster.players)
-                            } header: {
-                                TeamSectionHeader(roster: roster, viewModel: viewModel)
-                                    .textCase(nil)
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            ForEach(viewModel.teams) { roster in
+                                VStack(spacing: 0) {
+                                    TeamSectionHeader(roster: roster, viewModel: viewModel)
+                                        .padding(.horizontal)
+                                        .padding(.top, 12)
+                                        .padding(.bottom, 8)
+                                    Divider()
+                                    PlayerListView(roster: roster)
+                                        .padding(.horizontal)
+                                        .padding(.vertical, 8)
+                                }
+                                .background(RoundedRectangle(cornerRadius: 14).fill(Color(.secondarySystemGroupedBackground)))
+                                .padding(.horizontal)
+                                .dropDestination(for: String.self) { idStrings, _ in
+                                    for idString in idStrings {
+                                        viewModel.movePlayer(withID: idString, to: roster)
+                                    }
+                                    return true
+                                }
                             }
                         }
+                        .padding(.vertical)
                     }
-                    .listStyle(.insetGrouped)
+                    .background(Color(.systemGroupedBackground))
                 }
             }
             .navigationTitle("Team Builder")
@@ -92,13 +107,13 @@ struct ContentView: View {
 }
 
 struct TeamSectionHeader: View {
-    let roster: Roster
+    @ObservedObject var roster: Roster
     @ObservedObject var viewModel: ContentViewViewModel
 
     var body: some View {
         NavigationLink(destination: TeamResultView(viewModel: viewModel, team: roster.name)) {
             HStack {
-                Label(roster.name, systemImage: "shield.fill")
+                Label(roster.name, systemImage: "flag.fill")
                     .font(.headline)
                     .foregroundStyle(.indigo)
                 Spacer()
@@ -110,7 +125,7 @@ struct TeamSectionHeader: View {
 }
 
 struct TeamInfoView: View {
-    let roster: Roster
+    @ObservedObject var roster: Roster
 
     var body: some View {
         HStack(spacing: 6) {
@@ -138,24 +153,34 @@ struct TeamInfoView: View {
 }
 
 struct PlayerListView: View {
-    let players: [Player]
+    @ObservedObject var roster: Roster
 
     var body: some View {
-        ForEach(players) { player in
-            HStack(spacing: 10) {
-                Image(systemName: "person.fill")
-                    .foregroundStyle(player.gender == .mmp ? .blue : .green)
-                Text(player.name)
-                    .lineLimit(1, reservesSpace: true)
-                Spacer()
-                Text(player.gender.displayText)
-                    .font(.caption.bold())
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Capsule().fill((player.gender == .mmp ? Color.blue : Color.green).opacity(0.15)))
-                    .foregroundStyle(player.gender == .mmp ? .blue : .green)
+        if roster.players.isEmpty {
+            Text("Drag a player here")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+        } else {
+            ForEach(roster.players) { player in
+                HStack(spacing: 10) {
+                    Image(systemName: "person.fill")
+                        .foregroundStyle(player.gender == .mmp ? .blue : .green)
+                    Text(player.name)
+                        .lineLimit(1, reservesSpace: true)
+                    Spacer()
+                    Text(player.gender.displayText)
+                        .font(.caption.bold())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill((player.gender == .mmp ? Color.blue : Color.green).opacity(0.15)))
+                        .foregroundStyle(player.gender == .mmp ? .blue : .green)
+                }
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
+                .draggable(player.idString)
             }
-            .padding(.vertical, 2)
         }
     }
 }

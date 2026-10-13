@@ -8,11 +8,12 @@
 import Foundation
 import Accelerate
 import CoreData
+import Combine
 
-class Roster: Identifiable, Equatable, Hashable {
-    
+class Roster: ObservableObject, Identifiable, Equatable, Hashable {
+
     var name: String
-    var players: [Player]
+    @Published var players: [Player]
     var createDate: Date
     var id: UUID
     
