@@ -318,6 +318,169 @@ final class Team_BuilderTests: XCTestCase {
         XCTAssertFalse(viewModel.teamDiffError)
         XCTAssertEqual(viewModel.teams.count, 0, "Teams should not be set when declining best option")
     }
+
+    // MARK: - Team Generation Tests
+
+    private func selectPlayers(_ players: [Player], in viewModel: ContentViewViewModel) {
+        for player in players {
+            viewModel.selectedPlayers[player] = true
+        }
+    }
+
+    func testGenerateTeamsEvenSplitSingleGender() throws {
+        let viewModel = ContentViewViewModel()
+        viewModel.numberOfTeams = 2
+        let players = (0..<4).map { Player(name: "P\($0)", overallRating: 5.0, match: .mmp) }
+        selectPlayers(players, in: viewModel)
+
+        viewModel.randomize()
+
+        XCTAssertFalse(viewModel.teamDiffError)
+        XCTAssertEqual(viewModel.teams.count, 2)
+        XCTAssertEqual(viewModel.teams.map { $0.players.count }.sorted(), [2, 2])
+        XCTAssertEqual(Set(viewModel.teams.flatMap { $0.players }.map { $0.idString }).count, 4, "Every selected player should appear exactly once across all teams")
+    }
+
+    func testGenerateTeamsOddSplitSingleGender() throws {
+        let viewModel = ContentViewViewModel()
+        viewModel.numberOfTeams = 2
+        let players = (0..<5).map { Player(name: "P\($0)", overallRating: 5.0, match: .mmp) }
+        selectPlayers(players, in: viewModel)
+
+        viewModel.randomize()
+
+        XCTAssertFalse(viewModel.teamDiffError)
+        XCTAssertEqual(viewModel.teams.map { $0.players.count }.sorted(), [2, 3], "5 players across 2 teams should split as evenly as possible")
+        XCTAssertEqual(Set(viewModel.teams.flatMap { $0.players }.map { $0.idString }).count, 5)
+    }
+
+    func testGenerateTeamsBalancesGenderAcrossTeams() throws {
+        let viewModel = ContentViewViewModel()
+        viewModel.numberOfTeams = 2
+        let mmp = (0..<4).map { Player(name: "M\($0)", overallRating: 5.0, match: .mmp) }
+        let wmp = (0..<4).map { Player(name: "W\($0)", overallRating: 5.0, match: .wmp) }
+        selectPlayers(mmp + wmp, in: viewModel)
+
+        viewModel.randomize()
+
+        XCTAssertFalse(viewModel.teamDiffError)
+        for team in viewModel.teams {
+            XCTAssertEqual(team.numberOfPlayers(for: .mmp), 2, "Each team should get an even share of MMP players")
+            XCTAssertEqual(team.numberOfPlayers(for: .wmp), 2, "Each team should get an even share of WMP players")
+        }
+    }
+
+    func testGenerateTeamsDistributesAllPlayersExactlyOnceWithUnbalancedGenders() throws {
+        let viewModel = ContentViewViewModel()
+        viewModel.numberOfTeams = 2
+        let mmp = (0..<5).map { Player(name: "M\($0)", overallRating: 5.0, match: .mmp) }
+        let wmp = (0..<3).map { Player(name: "W\($0)", overallRating: 5.0, match: .wmp) }
+        selectPlayers(mmp + wmp, in: viewModel)
+
+        viewModel.randomize()
+
+        XCTAssertFalse(viewModel.teamDiffError)
+        XCTAssertEqual(viewModel.teams.map { $0.players.count }.sorted(), [4, 4])
+        XCTAssertEqual(Set(viewModel.teams.flatMap { $0.players }.map { $0.idString }).count, 8, "No player should be dropped or duplicated")
+    }
+
+    func testGenerateTeamsHandlesMoreTeamsThanPlayers() throws {
+        let viewModel = ContentViewViewModel()
+        viewModel.numberOfTeams = 3
+        let players = (0..<2).map { Player(name: "P\($0)", overallRating: 5.0, match: .mmp) }
+        selectPlayers(players, in: viewModel)
+
+        viewModel.randomize()
+
+        XCTAssertFalse(viewModel.teamDiffError)
+        XCTAssertEqual(viewModel.teams.count, 3)
+        XCTAssertEqual(viewModel.teams.map { $0.players.count }.sorted(), [0, 1, 1])
+    }
+
+    func testGenerateTeamsWithNoPlayersSelectedProducesEmptyRosters() throws {
+        let viewModel = ContentViewViewModel()
+        viewModel.numberOfTeams = 2
+
+        viewModel.randomize()
+
+        XCTAssertFalse(viewModel.teamDiffError)
+        XCTAssertEqual(viewModel.teams.count, 2)
+        XCTAssertTrue(viewModel.teams.allSatisfy { $0.players.isEmpty })
+    }
+
+    // Regression test: calculateMaxPlayers used to round to nearest instead of up, so a
+    // per-team/gender cap could undershoot the true total (e.g. 7 players / 3 teams rounded
+    // down to 2/team), leaving a player with no team to join and spinning the distribution
+    // loop in generateTeams() forever. Runs generation on a background queue with a bounded
+    // wait so a reintroduced hang fails this test instead of blocking the whole suite.
+    func testGenerateTeamsDoesNotHangWithUnevenThreeTeamSplit() throws {
+        let viewModel = ContentViewViewModel()
+        viewModel.numberOfTeams = 3
+        let players = (0..<7).map { Player(name: "P\($0)", overallRating: 5.0, match: .mmp) }
+        selectPlayers(players, in: viewModel)
+
+        let completed = expectation(description: "team generation completes")
+        DispatchQueue.global().async {
+            viewModel.randomize()
+            completed.fulfill()
+        }
+        wait(for: [completed], timeout: 5.0)
+
+        XCTAssertFalse(viewModel.teamDiffError)
+        XCTAssertEqual(viewModel.teams.count, 3)
+        XCTAssertEqual(viewModel.teams.map { $0.players.count }.sorted(), [2, 2, 3])
+        XCTAssertEqual(Set(viewModel.teams.flatMap { $0.players }.map { $0.idString }).count, 7)
+    }
+
+    func testGenerateTeamsSetsTeamDiffErrorWhenConstraintUnsatisfiable() throws {
+        let viewModel = ContentViewViewModel()
+        viewModel.numberOfTeams = 2
+        viewModel.useOverall = true
+        viewModel.ratingVariance = 0.0
+        viewModel.iterations = 5
+        // No 2-2 partition of these ratings can produce equal team averages, so the
+        // zero-tolerance variance can never be satisfied.
+        let players = [1.0, 2.0, 3.0, 10.0].map { Player(name: "P\($0)", overallRating: $0, match: .mmp) }
+        selectPlayers(players, in: viewModel)
+
+        viewModel.randomize()
+
+        XCTAssertTrue(viewModel.teamDiffError)
+        XCTAssertEqual(viewModel.teams.count, 0, "Teams should not be committed while an unresolved error is pending")
+        XCTAssertGreaterThan(viewModel.bestOptionTeams.0, 0)
+    }
+
+    func testChoseBestOptionTrueUsesBestFoundTeamsAfterUnsatisfiableConstraint() throws {
+        let viewModel = ContentViewViewModel()
+        viewModel.numberOfTeams = 2
+        viewModel.useOverall = true
+        viewModel.ratingVariance = 0.0
+        viewModel.iterations = 5
+        let players = [1.0, 2.0, 3.0, 10.0].map { Player(name: "P\($0)", overallRating: $0, match: .mmp) }
+        selectPlayers(players, in: viewModel)
+
+        viewModel.randomize()
+        XCTAssertTrue(viewModel.teamDiffError)
+
+        viewModel.choseBestOption(true)
+
+        XCTAssertFalse(viewModel.teamDiffError)
+        XCTAssertEqual(viewModel.teams.count, 2)
+        XCTAssertEqual(Set(viewModel.teams.flatMap { $0.players }.map { $0.idString }).count, 4)
+    }
+
+    func testGenerateTeamsSucceedsAndResetsBestOptionState() throws {
+        let viewModel = ContentViewViewModel()
+        viewModel.numberOfTeams = 2
+        let players = (0..<4).map { Player(name: "P\($0)", overallRating: 5.0, match: .mmp) }
+        selectPlayers(players, in: viewModel)
+
+        viewModel.randomize()
+
+        XCTAssertFalse(viewModel.teamDiffError)
+        XCTAssertEqual(viewModel.bestOptionTeams.0, 10.0, "Best-option tracking state should reset after a successful generation")
+        XCTAssertTrue(viewModel.bestOptionTeams.1.isEmpty)
+    }
     
     // MARK: - Auto Rating Adjustment Tests
 
