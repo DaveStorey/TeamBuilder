@@ -98,9 +98,13 @@ class ContentViewViewModel: ObservableObject {
         distributePlayers(&selectedMMP, &selectedWMP, maxMMPPerTeam, maxWMPPerTeam, &teamNumbers)
     }
 
-    // Helper function to calculate max number of players per team
+    // Helper function to calculate max number of players per team.
+    // Must round up (ceiling): rounding to nearest can undershoot the true total
+    // (e.g. 7 players / 3 teams rounds to 2/team, leaving 1 player with nowhere to
+    // go and spinning distributePlayers' while loop forever), since numberOfTeams * maxPlayers
+    // must always be >= totalPlayerCount for every player to find a team.
     private func calculateMaxPlayers(for totalPlayerCount: Int) -> Int {
-        return Int((Double(totalPlayerCount) / Double(numberOfTeams)).rounded(.awayFromZero))
+        return Int((Double(totalPlayerCount) / Double(numberOfTeams)).rounded(.up))
     }
 
     private func distributePlayers(_ mmpQueue: inout [Player], _ wmpQueue: inout [Player], _ maxMMPPerTeam: Int, _ maxWMPPerTeam: Int, _ teamNumbers: inout [Int: (Int, Int)]) {
