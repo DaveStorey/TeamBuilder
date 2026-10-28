@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import CoreData
+import UniformTypeIdentifiers
 
 struct RosterView: View {
     @Environment(\.dismiss) private var dismiss
@@ -20,6 +21,15 @@ struct RosterView: View {
     @State private var displayPlayerInfo = false
     @State private var rosterClearAlert = false
     @State private var playerInfo: Player = Player(name: "", overallRating: 0.0, match: .mmp, wins: 0, losses: 0)
+    @State private var showFileImporter = false
+    @State private var importResultMessage: String?
+    @State private var showImportResult = false
+    @State private var importQueue: [Player] = []
+    @State private var currentDuplicate: Player?
+    @State private var duplicateRenameText: String = ""
+    @State private var importedCount = 0
+    @State private var skippedDuplicateCount = 0
+    @State private var pendingImportErrors: [CSVImportError] = []
     @FocusState private var isFocused: Bool
     
     var body: some View {
@@ -40,6 +50,11 @@ struct RosterView: View {
                     Label("Select All", systemImage: "checkmark.circle")
                 }
              })
+            ToolbarItem(placement: .automatic, content: {
+                Button(action: { showFileImporter = true }) {
+                    Label("Import CSV", systemImage: "square.and.arrow.down.on.square")
+                }
+             })
         }
         .onAppear { getPlayers() }
         .popover(isPresented: $displayPlayerInfo, content: {
@@ -56,6 +71,24 @@ struct RosterView: View {
                 primaryButton: .destructive(Text("Yes"), action: rosterDelete),
                 secondaryButton: .cancel { rosterClearAlert = false }
             )
+        }
+        .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.commaSeparatedText, .plainText], allowsMultipleSelection: false) { result in
+            importCSV(from: result)
+        }
+        .alert("Import Roster", isPresented: $showImportResult, presenting: importResultMessage) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
+        .sheet(item: $currentDuplicate) { player in
+            DuplicatePlayerPrompt(
+                existingName: player.name,
+                proposedName: $duplicateRenameText,
+                isNameTaken: { isDuplicateName($0) },
+                onSkip: skipCurrentDuplicate,
+                onRename: confirmDuplicateRename
+            )
+            .presentationDetents([.height(280)])
         }
     }
 }
@@ -196,6 +229,91 @@ private extension RosterView {
         isFocused = true
     }
 
+    // MARK: - CSV Import
+    private func importCSV(from result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            let didStartAccessing = url.startAccessingSecurityScopedResource()
+            defer { if didStartAccessing { url.stopAccessingSecurityScopedResource() } }
+            do {
+                let contents = try String(contentsOf: url, encoding: .utf8)
+                let (parsedPlayers, errors) = CSVPlayerImporter.parse(contents)
+                importedCount = 0
+                skippedDuplicateCount = 0
+                pendingImportErrors = errors
+                importQueue = parsedPlayers
+                processImportQueue()
+            } catch {
+                importResultMessage = CSVImportError.fileUnreadable(error.localizedDescription).errorDescription
+                showImportResult = true
+            }
+        case .failure(let error):
+            importResultMessage = CSVImportError.fileUnreadable(error.localizedDescription).errorDescription
+            showImportResult = true
+        }
+    }
+
+    // Adds players until a duplicate name is hit, then pauses to prompt the user.
+    private func processImportQueue() {
+        while !importQueue.isEmpty {
+            let player = importQueue.removeFirst()
+            if isDuplicateName(player.name) {
+                duplicateRenameText = player.name
+                currentDuplicate = player
+                return
+            }
+            addPlayer(player)
+        }
+        finishImport()
+    }
+
+    private func isDuplicateName(_ name: String) -> Bool {
+        playerList.contains { $0.name.caseInsensitiveCompare(name) == .orderedSame }
+    }
+
+    private func addPlayer(_ player: Player) {
+        player.savePlayer(context: viewContext)
+        playerList.append(player)
+        importedCount += 1
+    }
+
+    private func skipCurrentDuplicate() {
+        skippedDuplicateCount += 1
+        currentDuplicate = nil
+        processImportQueue()
+    }
+
+    private func confirmDuplicateRename() {
+        guard let player = currentDuplicate else { return }
+        let trimmedName = duplicateRenameText.trimmingCharacters(in: .whitespaces)
+        guard !trimmedName.isEmpty, !isDuplicateName(trimmedName) else { return }
+        player.name = trimmedName
+        currentDuplicate = nil
+        addPlayer(player)
+        processImportQueue()
+    }
+
+    private func finishImport() {
+        importResultMessage = importSummary(importedCount: importedCount, skippedDuplicateCount: skippedDuplicateCount, errors: pendingImportErrors)
+        showImportResult = true
+        importedCount = 0
+        skippedDuplicateCount = 0
+        pendingImportErrors = []
+    }
+
+    private func importSummary(importedCount: Int, skippedDuplicateCount: Int, errors: [CSVImportError]) -> String {
+        var lines = ["Imported \(importedCount) player\(importedCount == 1 ? "" : "s")."]
+        if skippedDuplicateCount > 0 {
+            lines.append("Skipped \(skippedDuplicateCount) duplicate player\(skippedDuplicateCount == 1 ? "" : "s").")
+        }
+        if !errors.isEmpty {
+            lines.append("\(errors.count) row\(errors.count == 1 ? "" : "s") skipped:")
+            lines.append(contentsOf: errors.compactMap { $0.errorDescription })
+        }
+        return lines.joined(separator: "\n")
+    }
+
     // MARK: - Fetching Players
     private func getPlayers() {
         let fetchRequest: NSFetchRequest<PersistedPlayer> = PersistedPlayer.fetchRequest()
@@ -220,6 +338,60 @@ private extension RosterView {
             }
         } catch {
             print("Failed to fetch players: \(error.localizedDescription)")
+        }
+    }
+}
+
+private struct DuplicatePlayerPrompt: View {
+    let existingName: String
+    @Binding var proposedName: String
+    let isNameTaken: (String) -> Bool
+    let onSkip: () -> Void
+    let onRename: () -> Void
+    @FocusState private var isFocused: Bool
+
+    private var trimmedName: String {
+        proposedName.trimmingCharacters(in: .whitespaces)
+    }
+
+    private var canRename: Bool {
+        !trimmedName.isEmpty && !isNameTaken(trimmedName)
+    }
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section {
+                    Text("A player named \"\(existingName)\" is already in your roster.")
+                        .foregroundStyle(.secondary)
+                }
+                Section(header: Text("New Name")) {
+                    TextField("Name", text: $proposedName)
+                        .autocorrectionDisabled()
+                        .focused($isFocused)
+                    if trimmedName.isEmpty {
+                        Text("Name cannot be empty.")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    } else if isNameTaken(trimmedName) {
+                        Text("That name is also already in your roster.")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .navigationTitle("Duplicate Player")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Skip Player", role: .destructive, action: onSkip)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Rename & Import", action: onRename)
+                        .disabled(!canRename)
+                }
+            }
+            .onAppear { isFocused = true }
         }
     }
 }
