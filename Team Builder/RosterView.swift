@@ -21,6 +21,9 @@ struct RosterView: View {
     @State private var displayPlayerInfo = false
     @State private var rosterClearAlert = false
     @State private var playerInfo: Player = Player(name: "", overallRating: 0.0, match: .mmp, wins: 0, losses: 0)
+    @AppStorage("hideCSVImportInfo") private var hideImportInfo: Bool = false
+    @State private var showImportInfo = false
+    @State private var shouldOpenFileImporterAfterInfo = false
     @State private var showFileImporter = false
     @State private var importResultMessage: String?
     @State private var showImportResult = false
@@ -51,7 +54,7 @@ struct RosterView: View {
                 }
              })
             ToolbarItem(placement: .automatic, content: {
-                Button(action: { showFileImporter = true }) {
+                Button(action: { startCSVImport() }) {
                     Label("Import CSV", systemImage: "square.and.arrow.down.on.square")
                 }
              })
@@ -79,6 +82,16 @@ struct RosterView: View {
             Button("OK", role: .cancel) {}
         } message: { message in
             Text(message)
+        }
+        .sheet(isPresented: $showImportInfo, onDismiss: {
+            if shouldOpenFileImporterAfterInfo {
+                shouldOpenFileImporterAfterInfo = false
+                showFileImporter = true
+            }
+        }) {
+            CSVImportInfoView(dontShowAgain: $hideImportInfo) {
+                shouldOpenFileImporterAfterInfo = true
+            }
         }
         .sheet(item: $currentDuplicate) { player in
             DuplicatePlayerPrompt(
@@ -230,6 +243,14 @@ private extension RosterView {
     }
 
     // MARK: - CSV Import
+    private func startCSVImport() {
+        if hideImportInfo {
+            showFileImporter = true
+        } else {
+            showImportInfo = true
+        }
+    }
+
     private func importCSV(from result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
@@ -338,6 +359,79 @@ private extension RosterView {
             }
         } catch {
             print("Failed to fetch players: \(error.localizedDescription)")
+        }
+    }
+}
+
+private struct CSVImportInfoView: View {
+    @Binding var dontShowAgain: Bool
+    let onContinue: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Spreadsheet Format", systemImage: "tablecells")
+                            .font(.headline)
+                        Text("Include one player per row, with a header row, and columns in this exact order:")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        columnRow(number: 1, title: "Name")
+                        columnRow(number: 2, title: "Gender Match", detail: "\"MMP\" or \"FMP\"")
+                        columnRow(number: 3, title: "Overall Rating", detail: "0–10")
+                        columnRow(number: 4, title: "Throw Rating", detail: "0–10")
+                        columnRow(number: 5, title: "Cut Rating", detail: "0–10")
+                        columnRow(number: 6, title: "Defense Rating", detail: "0–10")
+                    }
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Color(.secondarySystemGroupedBackground)))
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Save as CSV", systemImage: "square.and.arrow.down")
+                            .font(.headline)
+                        Text("In Excel, choose File > Save As, then pick \"CSV UTF-8 (Comma delimited)\" as the file format before selecting that file below.")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Toggle("Don't show this again", isOn: $dontShowAgain)
+                        .padding(.top, 8)
+                }
+                .padding()
+            }
+            .navigationTitle("Import Players")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Choose File") {
+                        onContinue()
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private func columnRow(number: Int, title: String, detail: String? = nil) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text("\(number).")
+                .font(.subheadline.bold())
+                .foregroundStyle(.indigo)
+                .frame(width: 18, alignment: .leading)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                if let detail {
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
     }
 }
