@@ -58,6 +58,15 @@ final class Team_BuilderTests: XCTestCase {
         XCTAssertEqual(player.winningPercentage, 0.0)
     }
     
+    func testPlayerRatingChange() throws {
+        let player = Player(name: "Improver", overallRating: 7.5)
+        XCTAssertEqual(player.ratingChange, 0.0, "New player should start with no rating change")
+        
+        player.overallRating = 7.75
+        XCTAssertEqual(player.ratingChange, 0.25, accuracy: 0.0001)
+        XCTAssertEqual(player.valueCopy().ratingChange, 0.25, accuracy: 0.0001, "Value copy should preserve starting rating")
+    }
+    
     func testPlayerEquality() throws {
         let id = UUID().uuidString
         let player1 = Player(name: "Player", overallRating: 7.0, idString: id)

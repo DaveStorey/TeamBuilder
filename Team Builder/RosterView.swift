@@ -63,7 +63,6 @@ struct RosterView: View {
         .popover(isPresented: $displayPlayerInfo, content: {
             PlayerInfoView(player: $playerInfo)
                 .onDisappear {
-                    // Reset displayPlayerInfo to false when the popover disappears
                     displayPlayerInfo = false
                 }
         })
@@ -121,8 +120,6 @@ private extension RosterView {
                 List($playerList.sorted {
                     let lhs = $0.wrappedValue
                     let rhs = $1.wrappedValue
-                    // Order players by winning percentage, then total wins, then alphabetically. Note switch of lhs/rhs for name, otherwise
-                    // it sorts in reverse alphabetic order.
                     return (lhs.winningPercentage, lhs.wins, rhs.name) > (rhs.winningPercentage, rhs.wins, lhs.name)
                 } ) { $player in
                     playerRow(player: player)
@@ -275,7 +272,6 @@ private extension RosterView {
         }
     }
 
-    // Adds players until a duplicate name is hit, then pauses to prompt the user.
     private func processImportQueue() {
         while !importQueue.isEmpty {
             let player = importQueue.removeFirst()
@@ -341,6 +337,12 @@ private extension RosterView {
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: #keyPath(PersistedPlayer.name), ascending: true)]
         do {
             let persistedPlayers = try viewContext.fetch(fetchRequest)
+            persistedPlayers.forEach {
+                $0.startingRating = $0.overallRating
+            }
+            if viewContext.hasChanges {
+                try viewContext.save()
+            }
             persistedPlayers.forEach { persistedPlayer in
                 if let match = GenderMatch(rawValue: persistedPlayer.gender ?? "MMP"),
                    !playerList.contains(where: { $0.idString == persistedPlayer.idString }) {
@@ -354,6 +356,7 @@ private extension RosterView {
                                             losses: Int(persistedPlayer.losses),
                                             ties: Int(persistedPlayer.ties),
                                             pointDifferential: Int(persistedPlayer.pointDifferential),
+                                            startingRating: persistedPlayer.startingRating,
                                             idString: persistedPlayer.idString ?? UUID().uuidString))
                 }
             }

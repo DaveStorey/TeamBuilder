@@ -62,6 +62,7 @@ class Player: Identifiable, Equatable, Hashable {
     var losses: Int
     var ties: Int
     var pointDifferential: Int
+    let startingRating: Double
     let idString: String
 
     init(name: String,
@@ -74,9 +75,11 @@ class Player: Identifiable, Equatable, Hashable {
          losses: Int = 0,
          ties: Int = 0,
          pointDifferential: Int = 0,
+         startingRating: Double? = nil,
          idString: String = UUID().uuidString) {
         self.name = name
         self.overallRating = overallRating
+        self.startingRating = startingRating ?? overallRating
         self.throwRating = throwRating
         self.cutRating = cutRating
         self.defenseRating = defenseRating
@@ -90,6 +93,10 @@ class Player: Identifiable, Equatable, Hashable {
     
     var offensiveRating: Double {
         return (throwRating + cutRating) / 2.0
+    }
+    
+    var ratingChange: Double {
+        overallRating - startingRating
     }
     
     var winningPercentage: Double {
@@ -111,6 +118,7 @@ class Player: Identifiable, Equatable, Hashable {
                losses: losses,
                ties: ties,
                pointDifferential: pointDifferential,
+               startingRating: startingRating,
                idString: idString)
     }
     
@@ -181,6 +189,7 @@ class Player: Identifiable, Equatable, Hashable {
         savedPlayer.throwRating = throwRating
         savedPlayer.cutRating = cutRating
         savedPlayer.defenseRating = defenseRating
+        savedPlayer.startingRating = startingRating
         savedPlayer.idString = idString
         do {
             context.insert(savedPlayer)
@@ -227,6 +236,7 @@ class Player: Identifiable, Equatable, Hashable {
         persisted.throwRating = self.throwRating
         persisted.cutRating = self.cutRating
         persisted.defenseRating = self.defenseRating
+        persisted.startingRating = self.startingRating
         persisted.idString = self.idString
         return persisted
         }
@@ -245,6 +255,7 @@ extension PersistedPlayer {
                       losses: Int(losses),
                       ties: Int(ties),
                       pointDifferential: Int(pointDifferential),
+                      startingRating: startingRating,
                       idString: idString ?? "")
     }
 }

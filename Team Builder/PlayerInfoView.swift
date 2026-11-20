@@ -13,6 +13,18 @@ struct PlayerInfoView: View {
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible())]
 
+    private var roundedRatingChange: Double {
+        (player.ratingChange * 100).rounded() / 100
+    }
+
+    private var ratingChangeText: String {
+        roundedRatingChange == 0 ? "0.00" : String(format: "%+.2f", roundedRatingChange)
+    }
+
+    private var ratingChangeTint: Color {
+        roundedRatingChange > 0 ? .green : roundedRatingChange < 0 ? .red : .secondary
+    }
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -42,6 +54,7 @@ struct PlayerInfoView: View {
                         PlayerStatView(label: "Ties", icon: "equal.circle.fill", value: "\(player.ties)", tint: .orange)
                         PlayerStatView(label: "Win %", icon: "percent", value: String(format: "%.0f%%", player.winningPercentage * 100))
                         PlayerStatView(label: "Point Diff", icon: "plusminus.circle.fill", value: (player.pointDifferential >= 0 ? "+" : "") + "\(player.pointDifferential)", tint: player.pointDifferential >= 0 ? .green : .red)
+                        PlayerStatView(label: "Rating Change", icon: "chart.line.uptrend.xyaxis", value: ratingChangeText, tint: ratingChangeTint)
                     }
                     .padding(.horizontal)
 
@@ -61,7 +74,6 @@ struct PlayerInfoView: View {
     }
 }
 
-// Reusable Player Stat Card
 struct PlayerStatView: View {
     var label: String
     var icon: String
