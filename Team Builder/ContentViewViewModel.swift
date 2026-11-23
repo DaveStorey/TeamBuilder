@@ -11,7 +11,7 @@ import SwiftUI
 
 class ContentViewViewModel: ObservableObject {
     @Published var playerList: [Player] = []
-    @Published var selectedPlayers: [Player: Bool] = [:]
+    @Published var selectedPlayers: Set<Player> = []
     @Published var teams: [Roster] = []
     public private(set) var bestOptionTeams: (Double, [Roster]) = (10.0, [])
     private var preliminaryTeams: [Roster] = []
@@ -84,7 +84,7 @@ class ContentViewViewModel: ObservableObject {
     private func generateTeams() {
         preliminaryTeams = (1...numberOfTeams).map { Roster(name: "Team \($0)") }
         
-        let selectedRoster = selectedPlayers.filter { $0.value }.keys
+        let selectedRoster = selectedPlayers
         var selectedMMP = selectedRoster.filter { $0.gender == .mmp }.shuffled()
         var selectedWMP = selectedRoster.filter { $0.gender == .wmp }.shuffled()
         

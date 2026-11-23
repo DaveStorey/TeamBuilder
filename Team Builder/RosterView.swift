@@ -14,7 +14,7 @@ struct RosterView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) var viewContext
     @Binding var playerList: [Player]
-    @Binding var selectedPlayers: [Player: Bool]
+    @Binding var selectedPlayers: Set<Player>
     @State private var playerName: String = ""
     @State private var playerRating: Double = 0.0
     @State private var playerMatch: GenderMatch = .mmp
@@ -131,7 +131,7 @@ private extension RosterView {
     
     @ViewBuilder
     private func playerRow(player: Player) -> some View {
-        let isSelected = selectedPlayers[player] ?? false
+        let isSelected = selectedPlayers.contains(player)
         HStack(spacing: 12) {
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .font(.title3)
@@ -181,16 +181,17 @@ private extension RosterView {
 
     private func togglePlayerSelection(_ player: Player) {
         withAnimation {
-            let currentSelection = selectedPlayers[player] ?? false
-            selectedPlayers[player] = !currentSelection
+            if selectedPlayers.contains(player) {
+                selectedPlayers.remove(player)
+            } else {
+                selectedPlayers.insert(player)
+            }
         }
     }
     
     private func selectAllPlayers() {
         withAnimation {
-            selectedPlayers = playerList.reduce(into: [Player: Bool]()) {
-                $0[$1] = true
-            }
+            selectedPlayers = Set(playerList)
         }
     }
 
@@ -217,11 +218,13 @@ private extension RosterView {
     
     private func playerDelete(_ player: Player) {
         playerList.removeAll { $0.name == player.name }
+        selectedPlayers.remove(player)
         player.deletePlayers(context: viewContext)
     }
     
     private func rosterDelete() {
         playerList.removeAll()
+        selectedPlayers.removeAll()
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: "PersistedPlayer")
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
         deleteRequest.resultType = .resultTypeStatusOnly

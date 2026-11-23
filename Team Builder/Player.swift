@@ -157,10 +157,11 @@ class Player: Identifiable, Equatable, Hashable {
         return updatedProperties
     }
     
+    // Hash only on the immutable identity used by ==. Hashing mutable properties
+    // (ratings, record) would change a player's hash while it is stored in a Set
+    // or Dictionary, corrupting lookups and causing duplicate-key crashes.
     func hash(into hasher: inout Hasher) {
-        hasher.combine(name)
-        hasher.combine(overallRating)
-        hasher.combine(winningPercentage)
+        hasher.combine(idString)
     }
     
     func deletePlayers(context: NSManagedObjectContext) {

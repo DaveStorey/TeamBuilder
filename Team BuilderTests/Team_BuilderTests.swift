@@ -75,6 +75,66 @@ final class Team_BuilderTests: XCTestCase {
         XCTAssertEqual(player1, player2, "Players with same idString should be equal")
     }
     
+    func testPlayerHashIsStableAcrossMutation() throws {
+        let player = Player(name: "Mutable", overallRating: 5.0)
+        let originalHash = player.hashValue
+        
+        player.name = "Renamed"
+        player.overallRating = 7.25
+        player.wins += 3
+        player.losses += 1
+        player.ties += 1
+        player.pointDifferential += 4
+        
+        XCTAssertEqual(player.hashValue, originalHash, "Hash must not change when mutable properties change")
+    }
+    
+    // Regression test: Player's hash used to include mutable properties (name, rating,
+    // winning percentage), so updating a selected player's record or rating changed its
+    // hash while it was stored in selectedPlayers. The player then appeared unselected,
+    // and re-selecting it crashed with a duplicate-key error.
+    func testSelectionSurvivesRecordAndRatingUpdates() throws {
+        resetAdjustmentDefaults()
+        let viewModel = ContentViewViewModel()
+        viewModel.autoAdjustRatings = true
+        viewModel.pointsPerRatingUnit = 1.0
+        viewModel.adjustmentCurve = 1
+        
+        let a1 = Player(name: "A1", overallRating: 5.0)
+        let a2 = Player(name: "A2", overallRating: 9.0)
+        let b1 = Player(name: "B1", overallRating: 5.0)
+        let b2 = Player(name: "B2", overallRating: 9.0)
+        let allPlayers = [a1, a2, b1, b2]
+        selectPlayers(allPlayers, in: viewModel)
+        let teamA = Roster(name: "A", players: [a1, a2])
+        let teamB = Roster(name: "B", players: [b1, b2])
+        
+        // Simulate the record and rating updates applied after a game result.
+        for player in teamA.players {
+            player.wins += 1
+            player.pointDifferential += 10
+        }
+        for player in teamB.players {
+            player.losses += 1
+            player.pointDifferential -= 10
+        }
+        viewModel.applyRatingAdjustment(to: teamA, opponent: teamB, teamScore: 15, opponentScore: 5, context: nil)
+        viewModel.applyRatingAdjustment(to: teamB, opponent: teamA, teamScore: 5, opponentScore: 15, context: nil)
+        XCTAssertNotEqual(a1.overallRating, 5.0, "Precondition: ratings should have been adjusted")
+        
+        for player in allPlayers {
+            XCTAssertTrue(viewModel.selectedPlayers.contains(player), "\(player.name) should still be selected")
+        }
+        XCTAssertEqual(viewModel.selectedPlayers.count, 4)
+        
+        // Toggling off and back on must not create a duplicate entry.
+        viewModel.selectedPlayers.remove(a1)
+        XCTAssertFalse(viewModel.selectedPlayers.contains(a1))
+        viewModel.selectedPlayers.insert(a1)
+        XCTAssertTrue(viewModel.selectedPlayers.contains(a1))
+        XCTAssertEqual(viewModel.selectedPlayers.count, 4)
+    }
+    
     func testPlayerValueCopy() throws {
         let original = Player(
             name: "Original",
@@ -300,7 +360,7 @@ final class Team_BuilderTests: XCTestCase {
     func testViewModelAddPlayerViewAppear() throws {
         let viewModel = ContentViewViewModel()
         let player = Player(name: "Test", overallRating: 7.0)
-        viewModel.selectedPlayers[player] = true
+        viewModel.selectedPlayers.insert(player)
         
         XCTAssertEqual(viewModel.selectedPlayers.count, 1)
         
@@ -331,9 +391,7 @@ final class Team_BuilderTests: XCTestCase {
     // MARK: - Team Generation Tests
 
     private func selectPlayers(_ players: [Player], in viewModel: ContentViewViewModel) {
-        for player in players {
-            viewModel.selectedPlayers[player] = true
-        }
+        viewModel.selectedPlayers.formUnion(players)
     }
 
     func testGenerateTeamsEvenSplitSingleGender() throws {
