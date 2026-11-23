@@ -106,7 +106,6 @@ extension Roster {
         persisted.createDate = self.createDate
 
         // Map roster.players -> PersistedPlayer objects.
-        // Best practice: upsert players too, keyed by idString (or UUID).
         let persistedPlayers = try self.players.map { player in
             try player.upsert(in: context)
         }
